@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa tài liệu - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.giaotrinh_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-edit"></i> Chỉnh sửa tài liệu: {{ giaotrinh.ma_tai_lieu }}
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_tai_lieu">Mã tài liệu <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ma_tai_lieu" name="ma_tai_lieu" value="{{ giaotrinh.ma_tai_lieu }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loai">Loại tài liệu</label>
+                    <select class="form-control" id="loai" name="loai">
+                        <option value="Giáo trình" {% if giaotrinh.loai == 'Giáo trình' %}selected{% endif %}>Giáo trình</option>
+                        <option value="Tài liệu" {% if giaotrinh.loai == 'Tài liệu' %}selected{% endif %}>Tài liệu</option>
+                        <option value="Sách tham khảo" {% if giaotrinh.loai == 'Sách tham khảo' %}selected{% endif %}>Sách tham khảo</option>
+                        <option value="Bài báo" {% if giaotrinh.loai == 'Bài báo' %}selected{% endif %}>Bài báo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ten_tai_lieu">Tên tài liệu <span style="color: red;">*</span></label>
+                <input type="text" class="form-control" id="ten_tai_lieu" name="ten_tai_lieu" value="{{ giaotrinh.ten_tai_lieu }}" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="tac_gia">Tác giả</label>
+                    <input type="text" class="form-control" id="tac_gia" name="tac_gia" value="{{ giaotrinh.tac_gia or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="mon_hoc">Môn học</label>
+                    <input type="text" class="form-control" id="mon_hoc" name="mon_hoc" value="{{ giaotrinh.mon_hoc or '' }}">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="nha_xuat_ban">Nhà xuất bản</label>
+                    <input type="text" class="form-control" id="nha_xuat_ban" name="nha_xuat_ban" value="{{ giaotrinh.nha_xuat_ban or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="nam_xuat_ban">Năm xuất bản</label>
+                    <input type="number" class="form-control" id="nam_xuat_ban" name="nam_xuat_ban" value="{{ giaotrinh.nam_xuat_ban or '' }}" min="1900" max="2100">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="mo_ta">Mô tả</label>
+                <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4">{{ giaotrinh.mo_ta or '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+                <a href="{{ url_for('main.giaotrinh_list') }}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

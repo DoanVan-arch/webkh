@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Danh sách đề tài - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="color: var(--primary-color);">
+        <i class="fas fa-project-diagram"></i> Quản lý Đề tài Nghiên cứu
+    </h1>
+    <a href="{{ url_for('main.detai_add') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Thêm đề tài mới
+    </a>
+</div>
+
+<!-- Tìm kiếm -->
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="search-box">
+            <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo mã đề tài, tên đề tài, chủ nhiệm..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Danh sách đề tài -->
+<div class="card">
+    <div class="card-header">
+        Danh sách đề tài ({{ pagination.total }} đề tài)
+    </div>
+    <div class="card-body">
+        {% if pagination.items %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mã đề tài</th>
+                    <th>Tên đề tài</th>
+                    <th>Chủ nhiệm</th>
+                    <th>Lĩnh vực</th>
+                    <th>Trạng thái</th>
+                    <th>Kinh phí</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detai in pagination.items %}
+                <tr>
+                    <td><strong>{{ detai.ma_de_tai }}</strong></td>
+                    <td>{{ detai.ten_de_tai }}</td>
+                    <td>{{ detai.chu_nhiem }}</td>
+                    <td>{{ detai.linh_vuc or 'N/A' }}</td>
+                    <td>
+                        {% if detai.trang_thai == 'Hoàn thành' %}
+                        <span class="badge badge-success">{{ detai.trang_thai }}</span>
+                        {% elif detai.trang_thai == 'Đang thực hiện' %}
+                        <span class="badge badge-info">{{ detai.trang_thai }}</span>
+                        {% else %}
+                        <span class="badge badge-warning">{{ detai.trang_thai }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ "{:,.0f}".format(detai.kinh_phi) }} VNĐ</td>
+                    <td>
+                        {% if current_user.role == 'admin' or detai.don_vi == current_user.don_vi %}
+                        <a href="{{ url_for('main.detai_edit', id=detai.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('main.detai_delete', id=detai.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="return confirm('Bạn có chắc chắn muốn xóa đề tài này?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% else %}
+                        <span class="badge badge-info" style="padding: 0.5rem 1rem;">
+                            <i class="fas fa-eye"></i> Chỉ xem
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('main.detai_list', page=pagination.prev_num, search=search) }}">« Trước</a>
+            {% endif %}
+
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <span class="active">{{ page_num }}</span>
+                    {% else %}
+                    <a href="{{ url_for('main.detai_list', page=page_num, search=search) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                <span>...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('main.detai_list', page=pagination.next_num, search=search) }}">Sau »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 2rem;">Không tìm thấy đề tài nào.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

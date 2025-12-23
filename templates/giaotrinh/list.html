@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Danh sách giáo trình - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="color: var(--primary-color);">
+        <i class="fas fa-book"></i> Quản lý Giáo trình & Tài liệu
+    </h1>
+    <a href="{{ url_for('main.giaotrinh_add') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Thêm tài liệu mới
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="search-box">
+            <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo mã, tên tài liệu, tác giả, đơn vị..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        Danh sách tài liệu ({{ pagination.total }} tài liệu)
+    </div>
+    <div class="card-body">
+        {% if pagination.items %}
+        <div style="overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mã tài liệu</th>
+                    <th>Tên tài liệu</th>
+                    <th>Loại</th>
+                    <th>Tác giả</th>
+                    <th>Đơn vị</th>
+                    <th>NXB</th>
+                    <th>Năm XB</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gt in pagination.items %}
+                <tr {% if current_user.don_vi == gt.don_vi %}style="background: #e8f5e9;"{% endif %}>
+                    <td><strong>{{ gt.ma_tai_lieu }}</strong></td>
+                    <td>{{ gt.ten_tai_lieu }}</td>
+                    <td><span class="badge badge-info">{{ gt.loai or 'N/A' }}</span></td>
+                    <td>{{ gt.tac_gia or 'N/A' }}</td>
+                    <td>
+                        <span class="badge badge-warning" style="white-space: normal; max-width: 200px; display: inline-block;">
+                            {{ gt.don_vi or 'N/A' }}
+                        </span>
+                    </td>
+                    <td>{{ gt.nha_xuat_ban or 'N/A' }}</td>
+                    <td>{{ gt.nam_xuat_ban or 'N/A' }}</td>
+                    <td style="white-space: nowrap;">
+                        {% if current_user.role == 'admin' or current_user.don_vi == gt.don_vi %}
+                        <a href="{{ url_for('main.giaotrinh_edit', id=gt.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;" title="Sửa">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('main.giaotrinh_delete', id=gt.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="return confirm('Bạn có chắc chắn muốn xóa?')" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% else %}
+                        <span class="badge badge-info" style="padding: 0.4rem 0.8rem;">
+                            <i class="fas fa-eye"></i> Chỉ xem
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('main.giaotrinh_list', page=pagination.prev_num, search=search) }}">« Trước</a>
+            {% endif %}
+
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <span class="active">{{ page_num }}</span>
+                    {% else %}
+                    <a href="{{ url_for('main.giaotrinh_list', page=page_num, search=search) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                <span>...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('main.giaotrinh_list', page=pagination.next_num, search=search) }}">Sau »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 2rem;">Không tìm thấy tài liệu nào.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="alert alert-info" style="margin-top: 1rem;">
+    <i class="fas fa-info-circle"></i> <strong>Ghi chú:</strong> 
+    <ul style="margin: 0.5rem 0 0 1.5rem;">
+        <li>Tài liệu của đơn vị bạn được tô màu xanh lá nhạt</li>
+        <li>Bạn chỉ có thể sửa/xóa tài liệu của đơn vị mình</li>
+        <li>Bạn có thể xem tất cả tài liệu của các đơn vị khác</li>
+    </ul>
+</div>
+{% endblock %}

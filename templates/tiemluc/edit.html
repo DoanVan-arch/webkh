@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa tiềm lực - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.tiemluc_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-edit"></i> Chỉnh sửa cán bộ: {{ tiemluc.ma_can_bo }}
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_can_bo">Mã cán bộ <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ma_can_bo" name="ma_can_bo" value="{{ tiemluc.ma_can_bo }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ho_ten">Họ và tên <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ho_ten" name="ho_ten" value="{{ tiemluc.ho_ten }}" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_sinh">Ngày sinh</label>
+                    <input type="date" class="form-control" id="ngay_sinh" name="ngay_sinh" value="{{ tiemluc.ngay_sinh.strftime('%Y-%m-%d') if tiemluc.ngay_sinh else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="gioi_tinh">Giới tính</label>
+                    <select class="form-control" id="gioi_tinh" name="gioi_tinh">
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="Nam" {% if tiemluc.gioi_tinh == 'Nam' %}selected{% endif %}>Nam</option>
+                        <option value="Nữ" {% if tiemluc.gioi_tinh == 'Nữ' %}selected{% endif %}>Nữ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="don_vi">
+                        <i class="fas fa-building"></i> Đơn vị
+                    </label>
+                    {% if current_user.role == 'admin' %}
+                    <select class="form-control" id="don_vi" name="don_vi">
+                        <option value="">-- Chọn đơn vị --</option>
+                        {% for nhom, danh_sach in don_vi_list.items() %}
+                        <optgroup label="{{ nhom }}">
+                            {% for don_vi in danh_sach %}
+                            <option value="{{ don_vi }}" {% if tiemluc.don_vi == don_vi %}selected{% endif %}>{{ don_vi }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="text" class="form-control" value="{{ tiemluc.don_vi }}" readonly style="background-color: #f0f0f0;">
+                    <small class="form-text text-muted">Chỉ admin mới có thể thay đổi đơn vị</small>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="chuc_vu">Chức vụ</label>
+                    <input type="text" class="form-control" id="chuc_vu" name="chuc_vu" value="{{ tiemluc.chuc_vu or '' }}">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="hoc_vi">Học vị</label>
+                    <select class="form-control" id="hoc_vi" name="hoc_vi">
+                        <option value="">-- Chọn học vị --</option>
+                        <option value="Tiến sĩ" {% if tiemluc.hoc_vi == 'Tiến sĩ' %}selected{% endif %}>Tiến sĩ</option>
+                        <option value="Thạc sĩ" {% if tiemluc.hoc_vi == 'Thạc sĩ' %}selected{% endif %}>Thạc sĩ</option>
+                        <option value="Cử nhân" {% if tiemluc.hoc_vi == 'Cử nhân' %}selected{% endif %}>Cử nhân</option>
+                        <option value="Kỹ sư" {% if tiemluc.hoc_vi == 'Kỹ sư' %}selected{% endif %}>Kỹ sư</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hoc_ham">Học hàm</label>
+                    <select class="form-control" id="hoc_ham" name="hoc_ham">
+                        <option value="">-- Chọn học hàm --</option>
+                        <option value="Giáo sư" {% if tiemluc.hoc_ham == 'Giáo sư' %}selected{% endif %}>Giáo sư</option>
+                        <option value="Phó Giáo sư" {% if tiemluc.hoc_ham == 'Phó Giáo sư' %}selected{% endif %}>Phó Giáo sư</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="chuyen_mon">Chuyên môn</label>
+                <input type="text" class="form-control" id="chuyen_mon" name="chuyen_mon" value="{{ tiemluc.chuyen_mon or '' }}">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ tiemluc.email or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="dien_thoai">Điện thoại</label>
+                    <input type="text" class="form-control" id="dien_thoai" name="dien_thoai" value="{{ tiemluc.dien_thoai or '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="kinh_nghiem">Kinh nghiệm</label>
+                <textarea class="form-control" id="kinh_nghiem" name="kinh_nghiem" rows="3">{{ tiemluc.kinh_nghiem or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="thanh_tich">Thành tích</label>
+                <textarea class="form-control" id="thanh_tich" name="thanh_tich" rows="3">{{ tiemluc.thanh_tich or '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+                <a href="{{ url_for('main.tiemluc_list') }}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

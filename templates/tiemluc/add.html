@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm tiềm lực - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.tiemluc_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-plus"></i> Thêm cán bộ khoa học mới
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_can_bo">Mã cán bộ <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ma_can_bo" name="ma_can_bo" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ho_ten">Họ và tên <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ho_ten" name="ho_ten" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_sinh">Ngày sinh</label>
+                    <input type="date" class="form-control" id="ngay_sinh" name="ngay_sinh">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="gioi_tinh">Giới tính</label>
+                    <select class="form-control" id="gioi_tinh" name="gioi_tinh">
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="don_vi">
+                        <i class="fas fa-building"></i> Đơn vị {% if current_user.role != 'admin' %}<span style="color: red;">*</span>{% endif %}
+                    </label>
+                    {% if current_user.role == 'admin' %}
+                    <select class="form-control" id="don_vi" name="don_vi">
+                        <option value="">-- Chọn đơn vị --</option>
+                        {% for nhom, danh_sach in don_vi_list.items() %}
+                        <optgroup label="{{ nhom }}">
+                            {% for don_vi in danh_sach %}
+                            <option value="{{ don_vi }}">{{ don_vi }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="text" class="form-control" value="{{ current_user.don_vi }}" readonly style="background-color: #f0f0f0;">
+                    <small class="form-text text-muted">Bạn chỉ có thể thêm cán bộ cho đơn vị của mình</small>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="chuc_vu">Chức vụ</label>
+                    <input type="text" class="form-control" id="chuc_vu" name="chuc_vu">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="hoc_vi">Học vị</label>
+                    <select class="form-control" id="hoc_vi" name="hoc_vi">
+                        <option value="">-- Chọn học vị --</option>
+                        <option value="Tiến sĩ">Tiến sĩ</option>
+                        <option value="Thạc sĩ">Thạc sĩ</option>
+                        <option value="Cử nhân">Cử nhân</option>
+                        <option value="Kỹ sư">Kỹ sư</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hoc_ham">Học hàm</label>
+                    <select class="form-control" id="hoc_ham" name="hoc_ham">
+                        <option value="">-- Chọn học hàm --</option>
+                        <option value="Giáo sư">Giáo sư</option>
+                        <option value="Phó Giáo sư">Phó Giáo sư</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="chuyen_mon">Chuyên môn</label>
+                <input type="text" class="form-control" id="chuyen_mon" name="chuyen_mon">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="dien_thoai">Điện thoại</label>
+                    <input type="text" class="form-control" id="dien_thoai" name="dien_thoai">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="kinh_nghiem">Kinh nghiệm</label>
+                <textarea class="form-control" id="kinh_nghiem" name="kinh_nghiem" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="thanh_tich">Thành tích</label>
+                <textarea class="form-control" id="thanh_tich" name="thanh_tich" rows="3"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Lưu cán bộ
+                </button>
+                <a href="{{ url_for('main.tiemluc_list') }}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng nhập - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <h2>HỆ THỐNG QUẢN LÝ KHOA HỌC QUÂN SỰ</h2>
+            <p>Trường Đại học</p>
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label class="form-label" for="username">
+                    <i class="fas fa-user"></i> Tên đăng nhập
+                </label>
+                <input type="text" class="form-control" id="username" name="username" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">
+                    <i class="fas fa-lock"></i> Mật khẩu
+                </label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="remember" name="remember" style="width: auto;">
+                <label for="remember" style="margin: 0; cursor: pointer;">Ghi nhớ đăng nhập</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; color: #666;">
+            <p>Chưa có tài khoản? <a href="{{ url_for('auth.register') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Đăng ký ngay</a></p>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e0e0e0; text-align: center; font-size: 0.9rem; color: #999;">
+            <p><strong>Tài khoản mặc định:</strong> admin / admin123</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

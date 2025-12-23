@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1 style="font-size: 2.5rem; color: var(--primary-color); font-weight: 700; margin-bottom: 0.5rem;">
+        <i class="fas fa-chart-line"></i> Dashboard
+    </h1>
+    <p style="color: #666; font-size: 1.1rem;">Tổng quan hệ thống quản lý khoa học quân sự</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ total_detai }}</h3>
+            <p>Đề tài nghiên cứu</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class="fas fa-book"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ total_giaotrinh }}</h3>
+            <p>Giáo trình & Tài liệu</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ total_tiemluc }}</h3>
+            <p>Cán bộ khoa học</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon info">
+            <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ total_users }}</h3>
+            <p>Người dùng</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-clock"></i> Đề tài nghiên cứu gần đây
+    </div>
+    <div class="card-body">
+        {% if recent_detai %}
+        <div style="overflow-x: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mã đề tài</th>
+                        <th>Tên đề tài</th>
+                        <th>Chủ nhiệm</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dt in recent_detai %}
+                    <tr>
+                        <td><strong>{{ dt.ma_de_tai }}</strong></td>
+                        <td>{{ dt.ten_de_tai }}</td>
+                        <td>{{ dt.chu_nhiem }}</td>
+                        <td>
+                            {% if dt.trang_thai == 'Hoàn thành' %}
+                            <span class="badge badge-success">{{ dt.trang_thai }}</span>
+                            {% elif dt.trang_thai == 'Đang thực hiện' %}
+                            <span class="badge badge-info">{{ dt.trang_thai }}</span>
+                            {% else %}
+                            <span class="badge badge-warning">{{ dt.trang_thai }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ dt.created_at.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 2rem;">Chưa có đề tài nào.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+    <a href="{{ url_for('main.detai_add') }}" style="text-decoration: none;">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(44, 95, 45, 0.1), rgba(151, 184, 133, 0.1));">
+            <div class="card-body" style="text-align: center;">
+                <i class="fas fa-plus-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--primary-color); margin: 0;">Thêm đề tài mới</h3>
+                <p style="color: #666; margin-top: 0.5rem;">Tạo đề tài nghiên cứu</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('main.giaotrinh_add') }}" style="text-decoration: none;">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));">
+            <div class="card-body" style="text-align: center;">
+                <i class="fas fa-book-medical" style="font-size: 3rem; color: var(--success-color); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--success-color); margin: 0;">Thêm tài liệu</h3>
+                <p style="color: #666; margin-top: 0.5rem;">Thêm giáo trình/tài liệu</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('main.tiemluc_add') }}" style="text-decoration: none;">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(253, 126, 20, 0.1));">
+            <div class="card-body" style="text-align: center;">
+                <i class="fas fa-user-plus" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--warning-color); margin: 0;">Thêm cán bộ</h3>
+                <p style="color: #666; margin-top: 0.5rem;">Thêm tiềm lực khoa học</p>
+            </div>
+        </div>
+    </a>
+</div>
+{% endblock %}

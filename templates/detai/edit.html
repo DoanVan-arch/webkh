@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa đề tài - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.detai_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-edit"></i> Chỉnh sửa đề tài: {{ detai.ma_de_tai }}
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_de_tai">Mã đề tài <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ma_de_tai" name="ma_de_tai" value="{{ detai.ma_de_tai }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="chu_nhiem">Chủ nhiệm đề tài <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="chu_nhiem" name="chu_nhiem" value="{{ detai.chu_nhiem }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ten_de_tai">Tên đề tài <span style="color: red;">*</span></label>
+                <input type="text" class="form-control" id="ten_de_tai" name="ten_de_tai" value="{{ detai.ten_de_tai }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="mo_ta">Mô tả</label>
+                <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4">{{ detai.mo_ta or '' }}</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="linh_vuc">Lĩnh vực</label>
+                    <input type="text" class="form-control" id="linh_vuc" name="linh_vuc" value="{{ detai.linh_vuc or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="don_vi">
+                        <i class="fas fa-building"></i> Đơn vị
+                    </label>
+                    {% if current_user.role == 'admin' %}
+                    <select class="form-control" id="don_vi" name="don_vi">
+                        <option value="">-- Chọn đơn vị --</option>
+                        {% for nhom, danh_sach in don_vi_list.items() %}
+                        <optgroup label="{{ nhom }}">
+                            {% for don_vi in danh_sach %}
+                            <option value="{{ don_vi }}" {% if detai.don_vi == don_vi %}selected{% endif %}>{{ don_vi }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="text" class="form-control" value="{{ detai.don_vi }}" readonly style="background-color: #f0f0f0;">
+                    <small class="form-text text-muted">Chỉ admin mới có thể thay đổi đơn vị</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_bat_dau">Ngày bắt đầu</label>
+                    <input type="date" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau" value="{{ detai.ngay_bat_dau.strftime('%Y-%m-%d') if detai.ngay_bat_dau else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ngay_ket_thuc">Ngày kết thúc</label>
+                    <input type="date" class="form-control" id="ngay_ket_thuc" name="ngay_ket_thuc" value="{{ detai.ngay_ket_thuc.strftime('%Y-%m-%d') if detai.ngay_ket_thuc else '' }}">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="kinh_phi">Kinh phí (VNĐ)</label>
+                    <input type="number" class="form-control" id="kinh_phi" name="kinh_phi" value="{{ detai.kinh_phi }}" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="trang_thai">Trạng thái</label>
+                    <select class="form-control" id="trang_thai" name="trang_thai">
+                        <option value="Đang thực hiện" {% if detai.trang_thai == 'Đang thực hiện' %}selected{% endif %}>Đang thực hiện</option>
+                        <option value="Hoàn thành" {% if detai.trang_thai == 'Hoàn thành' %}selected{% endif %}>Hoàn thành</option>
+                        <option value="Tạm dừng" {% if detai.trang_thai == 'Tạm dừng' %}selected{% endif %}>Tạm dừng</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ket_qua">Kết quả</label>
+                <textarea class="form-control" id="ket_qua" name="ket_qua" rows="4">{{ detai.ket_qua or '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+                <a href="{{ url_for('main.detai_list') }}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
