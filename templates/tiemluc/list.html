@@ -38,6 +38,8 @@
                     <th>Chức vụ</th>
                     <th>Học vị</th>
                     <th>Học hàm</th>
+                    <th>Chức danh</th>
+                    <th>Nhà giáo</th>
                     <th>Thao tác</th>
                 </tr>
             </thead>
@@ -58,6 +60,20 @@
                     <td>
                         {% if tl.hoc_ham %}
                         <span class="badge badge-warning">{{ tl.hoc_ham }}</span>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tl.chuc_danh %}
+                        <span class="badge badge-info">{{ tl.chuc_danh }}</span>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tl.nha_giao %}
+                        <span class="badge badge-danger">{{ tl.nha_giao }}</span>
                         {% else %}
                         N/A
                         {% endif %}

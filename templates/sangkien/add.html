@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm sáng kiến - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.sangkien_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-plus"></i> Thêm sáng kiến mới
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_sang_kien">Mã sáng kiến <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ma_sang_kien" name="ma_sang_kien" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="chu_nhiem">Chủ nhiệm sáng kiến <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="chu_nhiem" name="chu_nhiem" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ten_sang_kien">Tên sáng kiến <span style="color: red;">*</span></label>
+                <input type="text" class="form-control" id="ten_sang_kien" name="ten_sang_kien" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="mo_ta">Mô tả</label>
+                <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="linh_vuc">Lĩnh vực</label>
+                    <input type="text" class="form-control" id="linh_vuc" name="linh_vuc">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cap_do">
+                        <i class="fas fa-layer-group"></i> Cấp độ
+                    </label>
+                    <select class="form-control" id="cap_do" name="cap_do">
+                        <option value="">-- Chọn cấp độ --</option>
+                        {% for cap in cap_do_list %}
+                        <option value="{{ cap }}">{{ cap }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="don_vi">
+                    <i class="fas fa-building"></i> Đơn vị {% if current_user.role != 'admin' %}<span style="color: red;">*</span>{% endif %}
+                </label>
+                {% if current_user.role == 'admin' %}
+                <select class="form-control" id="don_vi" name="don_vi">
+                    <option value="">-- Chọn đơn vị --</option>
+                    {% for nhom, danh_sach in don_vi_list.items() %}
+                    <optgroup label="{{ nhom }}">
+                        {% for don_vi in danh_sach %}
+                        <option value="{{ don_vi }}">{{ don_vi }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" class="form-control" value="{{ current_user.don_vi }}" readonly style="background-color: #f0f0f0;">
+                <small class="form-text text-muted">Bạn chỉ có thể thêm sáng kiến cho đơn vị của mình</small>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_bat_dau">Ngày bắt đầu</label>
+                    <input type="date" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ngay_ket_thuc">Ngày kết thúc</label>
+                    <input type="date" class="form-control" id="ngay_ket_thuc" name="ngay_ket_thuc">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="trang_thai">Trạng thái</label>
+                    <select class="form-control" id="trang_thai" name="trang_thai">
+                        <option value="Đang thực hiện">Đang thực hiện</option>
+                        <option value="Hoàn thành">Hoàn thành</option>
+                        <option value="Tạm dừng">Tạm dừng</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ket_qua">Kết quả</label>
+                    <select class="form-control" id="ket_qua" name="ket_qua">
+                        <option value="">-- Chọn kết quả --</option>
+                        <option value="Xuất sắc">Xuất sắc</option>
+                        <option value="Giỏi">Giỏi</option>
+                        <option value="Khá">Khá</option>
+                        <option value="Trung bình">Trung bình</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ban_sang_kien">Ban sáng kiến</label>
+                    <textarea class="form-control" id="ban_sang_kien" name="ban_sang_kien" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ nhiệm - Nguyễn Văn A&#10;Thư ký - Trần Thị B&#10;Thành viên - Lê Văn C"></textarea>
+                    <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hoi_dong_de_cuong">Hội đồng duyệt đề cương</label>
+                    <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ tịch - GS.TS Nguyễn Văn A&#10;Thư ký - TS Trần Thị B&#10;Thành viên - ThS Lê Văn C"></textarea>
+                    <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="hoi_dong_nghiem_thu">Hội đồng nghiệm thu</label>
+                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ tịch - GS.TS Nguyễn Văn A&#10;Thư ký - TS Trần Thị B&#10;Thành viên - ThS Lê Văn C"></textarea>
+                <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_ban">
+                        <i class="fas fa-file-upload"></i> Biên bản Ban sáng kiến
+                    </label>
+                    <input type="file" class="form-control" id="bien_ban_ban" name="bien_ban_ban" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_de_cuong">
+                        <i class="fas fa-file-upload"></i> Biên bản duyệt đề cương
+                    </label>
+                    <input type="file" class="form-control" id="bien_ban_de_cuong" name="bien_ban_de_cuong" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_nghiem_thu">
+                        <i class="fas fa-file-upload"></i> Biên bản nghiệm thu
+                    </label>
+                    <input type="file" class="form-control" id="bien_ban_nghiem_thu" name="bien_ban_nghiem_thu" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="file_sau_sua">
+                    <i class="fas fa-file-upload"></i> File sáng kiến sau khi sửa
+                </label>
+                <input type="file" class="form-control" id="file_sau_sua" name="file_sau_sua" accept=".pdf,.doc,.docx">
+                <small class="form-text text-muted">Chấp nhận file PDF, Word</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Lưu sáng kiến
+                </button>
+                <a href="{{ url_for('main.sangkien_list') }}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

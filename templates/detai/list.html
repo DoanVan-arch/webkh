@@ -38,18 +38,27 @@
                     <th>Tên đề tài</th>
                     <th>Chủ nhiệm</th>
                     <th>Lĩnh vực</th>
+                    <th>Cấp độ</th>
                     <th>Trạng thái</th>
-                    <th>Kinh phí</th>
+                    <th>Kết quả</th>
+                    <th>Đơn vị</th>
                     <th>Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 {% for detai in pagination.items %}
-                <tr>
+                <tr class="hoverable-row" {% if detai.mo_ta %}title="{{ detai.mo_ta }}"{% endif %}>
                     <td><strong>{{ detai.ma_de_tai }}</strong></td>
                     <td>{{ detai.ten_de_tai }}</td>
                     <td>{{ detai.chu_nhiem }}</td>
                     <td>{{ detai.linh_vuc or 'N/A' }}</td>
+                    <td>
+                        {% if detai.cap_do %}
+                        <span class="badge badge-info">{{ detai.cap_do }}</span>
+                        {% else %}
+                        <span style="color: #999;">N/A</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if detai.trang_thai == 'Hoàn thành' %}
                         <span class="badge badge-success">{{ detai.trang_thai }}</span>
@@ -59,7 +68,16 @@
                         <span class="badge badge-warning">{{ detai.trang_thai }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ "{:,.0f}".format(detai.kinh_phi) }} VNĐ</td>
+                    <td>
+                        {% if detai.ket_qua %}
+                        <span class="badge badge-{% if detai.ket_qua == 'Xuất sắc' %}success{% elif detai.ket_qua == 'Giỏi' %}info{% elif detai.ket_qua == 'Khá' %}warning{% else %}secondary{% endif %}">
+                            {{ detai.ket_qua }}
+                        </span>
+                        {% else %}
+                        <span style="color: #999;">Chưa có</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ detai.don_vi or 'N/A' }}</td>
                     <td>
                         {% if current_user.role == 'admin' or detai.don_vi == current_user.don_vi %}
                         <a href="{{ url_for('main.detai_edit', id=detai.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;">
@@ -108,4 +126,24 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+.table {
+    position: relative;
+}
+
+.hoverable-row {
+    cursor: help;
+}
+
+.hoverable-row:hover {
+    background-color: rgba(44, 95, 45, 0.05);
+}
+
+.hoverable-row[title]:hover {
+    position: relative;
+}
+
+
+</style>
 {% endblock %}

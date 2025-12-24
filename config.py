@@ -10,5 +10,5 @@ class Config:
     
     # Upload configuration
     UPLOAD_FOLDER = 'static/uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB max file size (tăng từ 16MB)
     ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'}

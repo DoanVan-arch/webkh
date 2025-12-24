@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}Tìm kiếm - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.search-input-group input {
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-type-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid var(--primary-color);
+    background: white;
+    color: var(--primary-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.tab-button.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.result-section {
+    margin-bottom: 2rem;
+}
+
+.result-count {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.result-item:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateX(4px);
+}
+
+.result-item.detai {
+    border-left-color: var(--primary-color);
+}
+
+.result-item.sangkien {
+    border-left-color: var(--success-color);
+}
+
+.result-item.tailieu {
+    border-left-color: var(--info-color);
+}
+
+.result-item.tiemluc {
+    border-left-color: var(--warning-color);
+}
+
+.result-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.result-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.result-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.result-description {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.result-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}
+
+.no-results i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.search-tips {
+    background: linear-gradient(135deg, rgba(44, 95, 45, 0.05), rgba(151, 184, 133, 0.05));
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.search-tips h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.search-tips ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.search-tips li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.search-tips li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--success-color);
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h1 style="color: var(--primary-color); margin-bottom: 0.5rem;">
+        <i class="fas fa-search"></i> Tìm kiếm tổng hợp
+    </h1>
+    <p style="color: #666; font-size: 1.1rem;">Tìm kiếm đề tài, sáng kiến, tài liệu, tiềm lực khoa học</p>
+</div>
+
+<div class="search-container">
+    <form method="GET" action="{{ url_for('main.timkiem') }}">
+        <div class="search-input-group">
+            <input type="text" 
+                   name="q" 
+                   class="form-control" 
+                   placeholder="Nhập từ khóa tìm kiếm (tên, mã, tác giả, mô tả...)" 
+                   value="{{ search_query }}"
+                   autofocus>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        </div>
+
+        <div class="search-type-tabs">
+            <button type="button" class="tab-button {% if search_type == 'all' %}active{% endif %}" onclick="setSearchType('all')">
+                <i class="fas fa-th"></i> Tất cả
+            </button>
+            <button type="button" class="tab-button {% if search_type == 'detai' %}active{% endif %}" onclick="setSearchType('detai')">
+                <i class="fas fa-project-diagram"></i> Đề tài
+            </button>
+            <button type="button" class="tab-button {% if search_type == 'sangkien' %}active{% endif %}" onclick="setSearchType('sangkien')">
+                <i class="fas fa-lightbulb"></i> Sáng kiến
+            </button>
+            <button type="button" class="tab-button {% if search_type == 'tailieu' %}active{% endif %}" onclick="setSearchType('tailieu')">
+                <i class="fas fa-book"></i> Tài liệu
+            </button>
+            <button type="button" class="tab-button {% if search_type == 'tiemluc' %}active{% endif %}" onclick="setSearchType('tiemluc')">
+                <i class="fas fa-users"></i> Tiềm lực
+            </button>
+        </div>
+        <input type="hidden" name="type" id="searchType" value="{{ search_type }}">
+    </form>
+</div>
+
+{% if search_query %}
+<!-- Kết quả đề tài -->
+{% if results.detai %}
+<div class="result-section">
+    <h2 style="color: var(--primary-color); margin-bottom: 1rem;">
+        <i class="fas fa-project-diagram"></i> Đề tài nghiên cứu
+        <span class="result-count">({{ results.detai|length }} kết quả)</span>
+    </h2>
+    {% for dt in results.detai %}
+    <div class="result-item detai">
+        <div class="result-title">{{ dt.ten_de_tai }}</div>
+        <div class="result-meta">
+            <span><i class="fas fa-hashtag"></i> {{ dt.ma_de_tai }}</span>
+            <span><i class="fas fa-user"></i> {{ dt.chu_nhiem }}</span>
+            <span><i class="fas fa-building"></i> {{ dt.don_vi }}</span>
+            {% if dt.trang_thai %}
+            <span>
+                {% if dt.trang_thai == 'Hoàn thành' %}
+                <span class="badge badge-success">{{ dt.trang_thai }}</span>
+                {% elif dt.trang_thai == 'Đang thực hiện' %}
+                <span class="badge badge-info">{{ dt.trang_thai }}</span>
+                {% else %}
+                <span class="badge badge-warning">{{ dt.trang_thai }}</span>
+                {% endif %}
+            </span>
+            {% endif %}
+        </div>
+        {% if dt.mo_ta %}
+        <div class="result-description">{{ dt.mo_ta[:200] }}{% if dt.mo_ta|length > 200 %}...{% endif %}</div>
+        {% endif %}
+        <div class="result-actions">
+            <a href="{{ url_for('main.detai_edit', id=dt.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-eye"></i> Xem chi tiết
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Kết quả sáng kiến -->
+{% if results.sangkien %}
+<div class="result-section">
+    <h2 style="color: var(--success-color); margin-bottom: 1rem;">
+        <i class="fas fa-lightbulb"></i> Sáng kiến
+        <span class="result-count">({{ results.sangkien|length }} kết quả)</span>
+    </h2>
+    {% for sk in results.sangkien %}
+    <div class="result-item sangkien">
+        <div class="result-title">{{ sk.ten_sang_kien }}</div>
+        <div class="result-meta">
+            <span><i class="fas fa-hashtag"></i> {{ sk.ma_sang_kien }}</span>
+            <span><i class="fas fa-user"></i> {{ sk.chu_nhiem }}</span>
+            <span><i class="fas fa-building"></i> {{ sk.don_vi }}</span>
+            {% if sk.trang_thai %}
+            <span>
+                {% if sk.trang_thai == 'Hoàn thành' or sk.trang_thai == 'Đã công nhận' %}
+                <span class="badge badge-success">{{ sk.trang_thai }}</span>
+                {% elif sk.trang_thai == 'Đang thực hiện' %}
+                <span class="badge badge-info">{{ sk.trang_thai }}</span>
+                {% else %}
+                <span class="badge badge-warning">{{ sk.trang_thai }}</span>
+                {% endif %}
+            </span>
+            {% endif %}
+        </div>
+        {% if sk.mo_ta %}
+        <div class="result-description">{{ sk.mo_ta[:200] }}{% if sk.mo_ta|length > 200 %}...{% endif %}</div>
+        {% endif %}
+        <div class="result-actions">
+            <a href="{{ url_for('main.sangkien_edit', id=sk.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-eye"></i> Xem chi tiết
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Kết quả tài liệu -->
+{% if results.tailieu %}
+<div class="result-section">
+    <h2 style="color: var(--info-color); margin-bottom: 1rem;">
+        <i class="fas fa-book"></i> Giáo trình & Tài liệu
+        <span class="result-count">({{ results.tailieu|length }} kết quả)</span>
+    </h2>
+    {% for tl in results.tailieu %}
+    <div class="result-item tailieu">
+        <div class="result-title">{{ tl.ten_tai_lieu }}</div>
+        <div class="result-meta">
+            <span><i class="fas fa-hashtag"></i> {{ tl.ma_tai_lieu }}</span>
+            <span><i class="fas fa-user"></i> {{ tl.chu_nhiem }}</span>
+            <span><i class="fas fa-building"></i> {{ tl.don_vi }}</span>
+            {% if tl.loai %}
+            <span><span class="badge badge-info">{{ tl.loai }}</span></span>
+            {% endif %}
+            {% if tl.nam_xuat_ban %}
+            <span><i class="fas fa-calendar"></i> {{ tl.nam_xuat_ban }}</span>
+            {% endif %}
+        </div>
+        {% if tl.mo_ta %}
+        <div class="result-description">{{ tl.mo_ta[:200] }}{% if tl.mo_ta|length > 200 %}...{% endif %}</div>
+        {% endif %}
+        <div class="result-actions">
+            <a href="{{ url_for('main.giaotrinh_edit', id=tl.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-eye"></i> Xem chi tiết
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Kết quả tiềm lực -->
+{% if results.tiemluc %}
+<div class="result-section">
+    <h2 style="color: var(--warning-color); margin-bottom: 1rem;">
+        <i class="fas fa-users"></i> Tiềm lực khoa học
+        <span class="result-count">({{ results.tiemluc|length }} kết quả)</span>
+    </h2>
+    {% for tl in results.tiemluc %}
+    <div class="result-item tiemluc">
+        <div class="result-title">{{ tl.ho_ten }}</div>
+        <div class="result-meta">
+            <span><i class="fas fa-hashtag"></i> {{ tl.ma_can_bo }}</span>
+            <span><i class="fas fa-building"></i> {{ tl.don_vi }}</span>
+            {% if tl.chuyen_mon %}
+            <span><i class="fas fa-graduation-cap"></i> {{ tl.chuyen_mon }}</span>
+            {% endif %}
+            {% if tl.hoc_vi %}
+            <span><span class="badge badge-warning">{{ tl.hoc_vi }}</span></span>
+            {% endif %}
+        </div>
+        <div class="result-actions">
+            <a href="{{ url_for('main.tiemluc_edit', id=tl.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-eye"></i> Xem chi tiết
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Không có kết quả -->
+{% if not results.detai and not results.sangkien and not results.tailieu and not results.tiemluc %}
+<div class="no-results">
+    <i class="fas fa-search"></i>
+    <h3>Không tìm thấy kết quả nào</h3>
+    <p>Vui lòng thử lại với từ khóa khác hoặc kiểm tra lại chính tả</p>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Gợi ý tìm kiếm -->
+<div class="search-tips">
+    <h3><i class="fas fa-lightbulb"></i> Gợi ý tìm kiếm</h3>
+    <ul>
+        <li>Nhập tên đề tài, sáng kiến, tài liệu hoặc tên cán bộ</li>
+        <li>Có thể tìm kiếm theo mã số (mã đề tài, mã sáng kiến, mã cán bộ...)</li>
+        <li>Tìm kiếm theo tên tác giả, chủ nhiệm đề tài</li>
+        <li>Tìm kiếm theo đơn vị, chuyên môn</li>
+        <li>Sử dụng các tab để lọc theo loại: Đề tài, Sáng kiến, Tài liệu, Tiềm lực</li>
+    </ul>
+</div>
+
+<div style="text-align: center; margin-top: 3rem; color: #999;">
+    <i class="fas fa-search" style="font-size: 5rem; opacity: 0.2; margin-bottom: 1rem;"></i>
+    <p style="font-size: 1.2rem;">Nhập từ khóa để bắt đầu tìm kiếm</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setSearchType(type) {
+    document.getElementById('searchType').value = type;
+    // Tự động submit form khi thay đổi type
+    const searchQuery = document.querySelector('input[name="q"]').value;
+    if (searchQuery) {
+        document.querySelector('form').submit();
+    }
+}
+
+// Highlight từ khóa trong kết quả
+document.addEventListener('DOMContentLoaded', function() {
+    const searchQuery = "{{ search_query }}".toLowerCase();
+    if (searchQuery) {
+        const resultItems = document.querySelectorAll('.result-title, .result-description');
+        resultItems.forEach(item => {
+            const text = item.textContent;
+            const regex = new RegExp(`(${searchQuery})`, 'gi');
+            const highlightedText = text.replace(regex, '<mark style="background: yellow; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+            item.innerHTML = highlightedText;
+        });
+    }
+});
+</script>
+{% endblock %}

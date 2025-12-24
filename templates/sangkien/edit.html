@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa sáng kiến - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.sangkien_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-edit"></i> Chỉnh sửa sáng kiến: {{ sangkien.ma_sang_kien }}
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_sang_kien">Mã sáng kiến <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="ma_sang_kien" name="ma_sang_kien" value="{{ sangkien.ma_sang_kien }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="chu_nhiem">Chủ nhiệm sáng kiến <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="chu_nhiem" name="chu_nhiem" value="{{ sangkien.chu_nhiem }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ten_sang_kien">Tên sáng kiến <span style="color: red;">*</span></label>
+                <input type="text" class="form-control" id="ten_sang_kien" name="ten_sang_kien" value="{{ sangkien.ten_sang_kien }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="mo_ta">Mô tả</label>
+                <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4">{{ sangkien.mo_ta or '' }}</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="linh_vuc">Lĩnh vực</label>
+                    <input type="text" class="form-control" id="linh_vuc" name="linh_vuc" value="{{ sangkien.linh_vuc or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cap_do">
+                        <i class="fas fa-layer-group"></i> Cấp độ
+                    </label>
+                    <select class="form-control" id="cap_do" name="cap_do">
+                        <option value="">-- Chọn cấp độ --</option>
+                        {% for cap in cap_do_list %}
+                        <option value="{{ cap }}" {% if sangkien.cap_do == cap %}selected{% endif %}>{{ cap }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="don_vi">
+                    <i class="fas fa-building"></i> Đơn vị
+                </label>
+                {% if current_user.role == 'admin' %}
+                <select class="form-control" id="don_vi" name="don_vi">
+                    <option value="">-- Chọn đơn vị --</option>
+                    {% for nhom, danh_sach in don_vi_list.items() %}
+                    <optgroup label="{{ nhom }}">
+                        {% for don_vi in danh_sach %}
+                        <option value="{{ don_vi }}" {% if sangkien.don_vi == don_vi %}selected{% endif %}>{{ don_vi }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" class="form-control" value="{{ sangkien.don_vi }}" readonly style="background-color: #f0f0f0;">
+                <small class="form-text text-muted">Chỉ admin mới có thể thay đổi đơn vị</small>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_bat_dau">Ngày bắt đầu</label>
+                    <input type="date" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau" value="{{ sangkien.ngay_bat_dau.strftime('%Y-%m-%d') if sangkien.ngay_bat_dau else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ngay_ket_thuc">Ngày kết thúc</label>
+                    <input type="date" class="form-control" id="ngay_ket_thuc" name="ngay_ket_thuc" value="{{ sangkien.ngay_ket_thuc.strftime('%Y-%m-%d') if sangkien.ngay_ket_thuc else '' }}">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="trang_thai">Trạng thái</label>
+                    <select class="form-control" id="trang_thai" name="trang_thai">
+                        <option value="Đang thực hiện" {% if sangkien.trang_thai == 'Đang thực hiện' %}selected{% endif %}>Đang thực hiện</option>
+                        <option value="Hoàn thành" {% if sangkien.trang_thai == 'Hoàn thành' %}selected{% endif %}>Hoàn thành</option>
+                        <option value="Tạm dừng" {% if sangkien.trang_thai == 'Tạm dừng' %}selected{% endif %}>Tạm dừng</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ket_qua">Kết quả</label>
+                    <select class="form-control" id="ket_qua" name="ket_qua">
+                        <option value="">-- Chọn kết quả --</option>
+                        <option value="Xuất sắc" {% if sangkien.ket_qua == 'Xuất sắc' %}selected{% endif %}>Xuất sắc</option>
+                        <option value="Giỏi" {% if sangkien.ket_qua == 'Giỏi' %}selected{% endif %}>Giỏi</option>
+                        <option value="Khá" {% if sangkien.ket_qua == 'Khá' %}selected{% endif %}>Khá</option>
+                        <option value="Trung bình" {% if sangkien.ket_qua == 'Trung bình' %}selected{% endif %}>Trung bình</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ban_sang_kien">Ban sáng kiến</label>
+                    <textarea class="form-control" id="ban_sang_kien" name="ban_sang_kien" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ nhiệm - Nguyễn Văn A&#10;Thư ký - Trần Thị B&#10;Thành viên - Lê Văn C">{% for member in sangkien.ban_thanh_vien %}{{ member.vai_tro }} - {{ member.ho_ten }}
+{% endfor %}</textarea>
+                    <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hoi_dong_de_cuong">Hội đồng duyệt đề cương</label>
+                    <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ tịch - GS.TS Nguyễn Văn A&#10;Thư ký - TS Trần Thị B&#10;Thành viên - ThS Lê Văn C">{% for member in sangkien.hoi_dong_de_cuong %}{{ member.vai_tro }} - {{ member.ho_ten }}
+{% endfor %}</textarea>
+                    <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="hoi_dong_nghiem_thu">Hội đồng nghiệm thu</label>
+                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ tịch - GS.TS Nguyễn Văn A&#10;Thư ký - TS Trần Thị B&#10;Thành viên - ThS Lê Văn C">{% for member in sangkien.hoi_dong_nghiem_thu %}{{ member.vai_tro }} - {{ member.ho_ten }}
+{% endfor %}</textarea>
+                <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_ban">
+                        <i class="fas fa-file-upload"></i> Biên bản Ban sáng kiến
+                    </label>
+                    {% if sangkien.bien_ban_ban %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('static', filename='uploads/' + sangkien.bien_ban_ban) }}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-download"></i> Xem file hiện tại
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="bien_ban_ban" name="bien_ban_ban" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_de_cuong">
+                        <i class="fas fa-file-upload"></i> Biên bản duyệt đề cương
+                    </label>
+                    {% if sangkien.bien_ban_de_cuong %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('static', filename='uploads/' + sangkien.bien_ban_de_cuong) }}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-download"></i> Xem file hiện tại
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="bien_ban_de_cuong" name="bien_ban_de_cuong" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_nghiem_thu">
+                        <i class="fas fa-file-upload"></i> Biên bản nghiệm thu
+                    </label>
+                    {% if sangkien.bien_ban_nghiem_thu %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('static', filename='uploads/' + sangkien.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-download"></i> Xem file hiện tại
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="bien_ban_nghiem_thu" name="bien_ban_nghiem_thu" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="file_sau_sua">
+                    <i class="fas fa-file-upload"></i> File sáng kiến sau khi sửa
+                </label>
+                {% if sangkien.file_sau_sua %}
+                <div style="margin-bottom: 0.5rem;">
+                    <a href="{{ url_for('static', filename='uploads/' + sangkien.file_sau_sua) }}" target="_blank" class="btn btn-sm btn-info">
+                        <i class="fas fa-file-download"></i> Xem file hiện tại
+                    </a>
+                </div>
+                {% endif %}
+                <input type="file" class="form-control" id="file_sau_sua" name="file_sau_sua" accept=".pdf,.doc,.docx">
+                <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+                <a href="{{ url_for('main.sangkien_list') }}" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

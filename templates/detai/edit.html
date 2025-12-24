@@ -14,7 +14,7 @@
         <i class="fas fa-edit"></i> Chỉnh sửa đề tài: {{ detai.ma_de_tai }}
     </div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label" for="ma_de_tai">Mã đề tài <span style="color: red;">*</span></label>
@@ -44,25 +44,37 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="don_vi">
-                        <i class="fas fa-building"></i> Đơn vị
+                    <label class="form-label" for="cap_do">
+                        <i class="fas fa-layer-group"></i> Cấp độ
                     </label>
-                    {% if current_user.role == 'admin' %}
-                    <select class="form-control" id="don_vi" name="don_vi">
-                        <option value="">-- Chọn đơn vị --</option>
-                        {% for nhom, danh_sach in don_vi_list.items() %}
-                        <optgroup label="{{ nhom }}">
-                            {% for don_vi in danh_sach %}
-                            <option value="{{ don_vi }}" {% if detai.don_vi == don_vi %}selected{% endif %}>{{ don_vi }}</option>
-                            {% endfor %}
-                        </optgroup>
+                    <select class="form-control" id="cap_do" name="cap_do">
+                        <option value="">-- Chọn cấp độ --</option>
+                        {% for cap in cap_do_list %}
+                        <option value="{{ cap }}" {% if detai.cap_do == cap %}selected{% endif %}>{{ cap }}</option>
                         {% endfor %}
                     </select>
-                    {% else %}
-                    <input type="text" class="form-control" value="{{ detai.don_vi }}" readonly style="background-color: #f0f0f0;">
-                    <small class="form-text text-muted">Chỉ admin mới có thể thay đổi đơn vị</small>
-                    {% endif %}
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="don_vi">
+                    <i class="fas fa-building"></i> Đơn vị
+                </label>
+                {% if current_user.role == 'admin' %}
+                <select class="form-control" id="don_vi" name="don_vi">
+                    <option value="">-- Chọn đơn vị --</option>
+                    {% for nhom, danh_sach in don_vi_list.items() %}
+                    <optgroup label="{{ nhom }}">
+                        {% for don_vi in danh_sach %}
+                        <option value="{{ don_vi }}" {% if detai.don_vi == don_vi %}selected{% endif %}>{{ don_vi }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" class="form-control" value="{{ detai.don_vi }}" readonly style="background-color: #f0f0f0;">
+                <small class="form-text text-muted">Chỉ admin mới có thể thay đổi đơn vị</small>
+                {% endif %}
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -79,11 +91,6 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
-                    <label class="form-label" for="kinh_phi">Kinh phí (VNĐ)</label>
-                    <input type="number" class="form-control" id="kinh_phi" name="kinh_phi" value="{{ detai.kinh_phi }}" min="0">
-                </div>
-
-                <div class="form-group">
                     <label class="form-label" for="trang_thai">Trạng thái</label>
                     <select class="form-control" id="trang_thai" name="trang_thai">
                         <option value="Đang thực hiện" {% if detai.trang_thai == 'Đang thực hiện' %}selected{% endif %}>Đang thực hiện</option>
@@ -91,11 +98,102 @@
                         <option value="Tạm dừng" {% if detai.trang_thai == 'Tạm dừng' %}selected{% endif %}>Tạm dừng</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ket_qua">Kết quả</label>
+                    <select class="form-control" id="ket_qua" name="ket_qua">
+                        <option value="">-- Chọn kết quả --</option>
+                        <option value="Xuất sắc" {% if detai.ket_qua == 'Xuất sắc' %}selected{% endif %}>Xuất sắc</option>
+                        <option value="Giỏi" {% if detai.ket_qua == 'Giỏi' %}selected{% endif %}>Giỏi</option>
+                        <option value="Khá" {% if detai.ket_qua == 'Khá' %}selected{% endif %}>Khá</option>
+                        <option value="Trung bình" {% if detai.ket_qua == 'Trung bình' %}selected{% endif %}>Trung bình</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ban_de_tai">Ban đề tài</label>
+                    <textarea class="form-control" id="ban_de_tai" name="ban_de_tai" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ nhiệm - Nguyễn Văn A&#10;Thư ký - Trần Thị B&#10;Thành viên - Lê Văn C">{% for member in detai.ban_thanh_vien %}{{ member.vai_tro }} - {{ member.ho_ten }}
+{% endfor %}</textarea>
+                    <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="hoi_dong_de_cuong">Hội đồng duyệt đề cương</label>
+                    <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ tịch - GS.TS Nguyễn Văn A&#10;Thư ký - TS Trần Thị B&#10;Thành viên - ThS Lê Văn C">{% for member in detai.hoi_dong_de_cuong %}{{ member.vai_tro }} - {{ member.ho_ten }}
+{% endfor %}</textarea>
+                    <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+                </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="ket_qua">Kết quả</label>
-                <textarea class="form-control" id="ket_qua" name="ket_qua" rows="4">{{ detai.ket_qua or '' }}</textarea>
+                <label class="form-label" for="hoi_dong_nghiem_thu">Hội đồng nghiệm thu</label>
+                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="4" placeholder="Mỗi dòng theo định dạng: Vai trò - Họ tên&#10;Ví dụ:&#10;Chủ tịch - GS.TS Nguyễn Văn A&#10;Thư ký - TS Trần Thị B&#10;Thành viên - ThS Lê Văn C">{% for member in detai.hoi_dong_nghiem_thu %}{{ member.vai_tro }} - {{ member.ho_ten }}
+{% endfor %}</textarea>
+                <small class="form-text text-muted">Nhập mỗi thành viên trên một dòng theo định dạng: Vai trò - Họ tên</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_ban">
+                        <i class="fas fa-file-upload"></i> Biên bản Ban đề tài
+                    </label>
+                    {% if detai.bien_ban_ban %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('static', filename='uploads/' + detai.bien_ban_ban) }}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-download"></i> Xem file hiện tại
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="bien_ban_ban" name="bien_ban_ban" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_de_cuong">
+                        <i class="fas fa-file-upload"></i> Biên bản duyệt đề cương
+                    </label>
+                    {% if detai.bien_ban_de_cuong %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('static', filename='uploads/' + detai.bien_ban_de_cuong) }}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-download"></i> Xem file hiện tại
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="bien_ban_de_cuong" name="bien_ban_de_cuong" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bien_ban_nghiem_thu">
+                        <i class="fas fa-file-upload"></i> Biên bản nghiệm thu
+                    </label>
+                    {% if detai.bien_ban_nghiem_thu %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('static', filename='uploads/' + detai.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-download"></i> Xem file hiện tại
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="bien_ban_nghiem_thu" name="bien_ban_nghiem_thu" accept=".pdf,.doc,.docx">
+                    <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="file_sau_sua">
+                    <i class="fas fa-file-upload"></i> File đề tài sau khi sửa
+                </label>
+                {% if detai.file_sau_sua %}
+                <div style="margin-bottom: 0.5rem;">
+                    <a href="{{ url_for('static', filename='uploads/' + detai.file_sau_sua) }}" target="_blank" class="btn btn-sm btn-info">
+                        <i class="fas fa-file-download"></i> Xem file hiện tại
+                    </a>
+                </div>
+                {% endif %}
+                <input type="file" class="form-control" id="file_sau_sua" name="file_sau_sua" accept=".pdf,.doc,.docx">
+                <small class="form-text text-muted">Chấp nhận file PDF, Word. Để trống nếu không thay đổi</small>
             </div>
 
             <div style="display: flex; gap: 1rem; margin-top: 2rem;">

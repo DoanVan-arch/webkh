@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Danh sách Sáng kiến - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="color: var(--primary-color);">
+        <i class="fas fa-lightbulb"></i> Quản lý Sáng kiến
+    </h1>
+    <a href="{{ url_for('main.sangkien_add') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Thêm sáng kiến mới
+    </a>
+</div>
+
+<!-- Tìm kiếm -->
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="search-box">
+            <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo mã sáng kiến, tên sáng kiến, tác giả..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Danh sách sáng kiến -->
+<div class="card">
+    <div class="card-header">
+        Danh sách sáng kiến ({{ pagination.total }} sáng kiến)
+    </div>
+    <div class="card-body">
+        {% if pagination.items %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mã sáng kiến</th>
+                    <th>Tên sáng kiến</th>
+                    <th>Tác giả</th>
+                    <th>Lĩnh vực</th>
+                    <th>Cấp độ</th>
+                    <th>Trạng thái</th>
+                    <th>Kết quả</th>
+                    <th>Đơn vị</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sangkien in pagination.items %}
+                <tr class="hoverable-row" {% if sangkien.mo_ta %}title="{{ sangkien.mo_ta }}"{% endif %}>
+                    <td><strong>{{ sangkien.ma_sang_kien }}</strong></td>
+                    <td>{{ sangkien.ten_sang_kien }}</td>
+                    <td>{{ sangkien.chu_nhiem }}</td>
+                    <td>{{ sangkien.linh_vuc or 'N/A' }}</td>
+                    <td>
+                        {% if sangkien.cap_do %}
+                        <span class="badge badge-info">{{ sangkien.cap_do }}</span>
+                        {% else %}
+                        <span style="color: #999;">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sangkien.trang_thai == 'Hoàn thành' or sangkien.trang_thai == 'Đã công nhận' %}
+                        <span class="badge badge-success">{{ sangkien.trang_thai }}</span>
+                        {% elif sangkien.trang_thai == 'Đang thực hiện' %}
+                        <span class="badge badge-info">{{ sangkien.trang_thai }}</span>
+                        {% else %}
+                        <span class="badge badge-warning">{{ sangkien.trang_thai }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sangkien.ket_qua %}
+                        <span class="badge badge-{% if sangkien.ket_qua == 'Xuất sắc' %}success{% elif sangkien.ket_qua == 'Giỏi' %}info{% elif sangkien.ket_qua == 'Khá' %}warning{% else %}secondary{% endif %}">
+                            {{ sangkien.ket_qua }}
+                        </span>
+                        {% else %}
+                        <span style="color: #999;">Chưa có</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ sangkien.don_vi or 'N/A' }}</td>
+                    <td>
+                        {% if current_user.role == 'admin' or sangkien.don_vi == current_user.don_vi %}
+                        <a href="{{ url_for('main.sangkien_edit', id=sangkien.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('main.sangkien_delete', id=sangkien.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="return confirm('Bạn có chắc chắn muốn xóa sáng kiến này?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% else %}
+                        <span class="badge badge-info" style="padding: 0.5rem 1rem;">
+                            <i class="fas fa-eye"></i> Chỉ xem
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('main.sangkien_list', page=pagination.prev_num, search=search) }}">« Trước</a>
+            {% endif %}
+
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <span class="active">{{ page_num }}</span>
+                    {% else %}
+                    <a href="{{ url_for('main.sangkien_list', page=page_num, search=search) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                <span>...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('main.sangkien_list', page=pagination.next_num, search=search) }}">Sau »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 2rem;">Không tìm thấy sáng kiến nào.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.table {
+    position: relative;
+}
+
+.hoverable-row {
+    cursor: help;
+}
+
+.hoverable-row:hover {
+    background-color: rgba(44, 95, 45, 0.05);
+}
+
+.hoverable-row[title]:hover {
+    position: relative;
+}
+
+
+</style>
+{% endblock %}

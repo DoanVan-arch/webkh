@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm tài liệu - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.tailieu_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-plus"></i> Thêm tài liệu mới
+        {% if current_user.role != 'admin' and current_user.don_vi %}
+        <span style="float: right; font-size: 0.9rem;">Đơn vị: {{ current_user.don_vi }}</span>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <!-- Thông tin cơ bản -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_tai_lieu">
+                        <i class="fas fa-barcode"></i> Mã tài liệu <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="ma_tai_lieu" name="ma_tai_lieu" required>
+                    <small class="form-text text-muted">Ví dụ: TL001, GT-KTQS-2024</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loai">
+                        <i class="fas fa-tags"></i> Loại tài liệu
+                    </label>
+                    <select class="form-control" id="loai" name="loai">
+                        <option value="Giáo trình">Giáo trình</option>
+                        <option value="Tài liệu">Tài liệu</option>
+                        <option value="Sách tham khảo">Sách tham khảo</option>
+                        <option value="Bài báo">Bài báo</option>
+                        <option value="Bài giảng">Bài giảng</option>
+                        <option value="Đề cương">Đề cương</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ten_tai_lieu">
+                    <i class="fas fa-book"></i> Tên tài liệu <span style="color: red;">*</span>
+                </label>
+                <input type="text" class="form-control" id="ten_tai_lieu" name="ten_tai_lieu" required>
+            </div>
+
+            {% if current_user.role == 'admin' %}
+            <div class="form-group">
+                <label class="form-label" for="don_vi">
+                    <i class="fas fa-building"></i> Đơn vị <span style="color: red;">*</span>
+                </label>
+                <select class="form-control" id="don_vi" name="don_vi" required>
+                    <option value="">-- Chọn đơn vị --</option>
+                    {% for nhom, danh_sach in don_vi_list.items() %}
+                    <optgroup label="{{ nhom }}">
+                        {% for don_vi in danh_sach %}
+                        <option value="{{ don_vi }}">{{ don_vi }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Tài liệu sẽ được gán cho đơn vị: <strong>{{ current_user.don_vi }}</strong>
+            </div>
+            {% endif %}
+
+            <!-- Tác giả (nhiều người) -->
+            <div class="form-group">
+                <label class="form-label" for="tac_gia">
+                    <i class="fas fa-users"></i> Tác giả <span style="color: red;">*</span>
+                </label>
+                <textarea class="form-control" id="tac_gia" name="tac_gia" rows="4" required 
+                          placeholder="Nhập tên các tác giả, mỗi tác giả một dòng.&#10;Ví dụ:&#10;PGS.TS. Nguyễn Văn A&#10;TS. Trần Thị B&#10;ThS. Lê Văn C"></textarea>
+                <small class="form-text text-muted">
+                    <i class="fas fa-info-circle"></i> Nhập mỗi tác giả trên một dòng. Có thể có nhiều tác giả.
+                </small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="mon_hoc">
+                        <i class="fas fa-chalkboard-teacher"></i> Môn học
+                    </label>
+                    <input type="text" class="form-control" id="mon_hoc" name="mon_hoc" 
+                           placeholder="VD: Kỹ thuật quân sự, Toán cao cấp">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="linh_vuc">
+                        <i class="fas fa-flask"></i> Lĩnh vực
+                    </label>
+                    <input type="text" class="form-control" id="linh_vuc" name="linh_vuc" 
+                           placeholder="VD: Công nghệ thông tin, Quân sự">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="nha_xuat_ban">
+                        <i class="fas fa-building"></i> Nhà xuất bản
+                    </label>
+                    <input type="text" class="form-control" id="nha_xuat_ban" name="nha_xuat_ban" 
+                           placeholder="VD: NXB Quân đội nhân dân">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="nam_xuat_ban">
+                        <i class="fas fa-calendar"></i> Năm xuất bản
+                    </label>
+                    <input type="number" class="form-control" id="nam_xuat_ban" name="nam_xuat_ban" 
+                           min="1900" max="2100" placeholder="2024">
+                </div>
+            </div>
+
+            <!-- Ngày thực hiện -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_bat_dau">
+                        <i class="fas fa-calendar-plus"></i> Ngày bắt đầu
+                    </label>
+                    <input type="date" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ngay_ket_thuc">
+                        <i class="fas fa-calendar-check"></i> Ngày hoàn thành
+                    </label>
+                    <input type="date" class="form-control" id="ngay_ket_thuc" name="ngay_ket_thuc">
+                </div>
+            </div>
+
+            <!-- Trạng thái -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="trang_thai">
+                        <i class="fas fa-tasks"></i> Trạng thái
+                    </label>
+                    <select class="form-control" id="trang_thai" name="trang_thai">
+                        <option value="Đang thực hiện">Đang thực hiện</option>
+                        <option value="Hoàn thành">Hoàn thành</option>
+                        <option value="Đã xuất bản">Đã xuất bản</option>
+                        <option value="Tạm dừng">Tạm dừng</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ket_qua">
+                        <i class="fas fa-trophy"></i> Kết quả/Xếp loại
+                    </label>
+                    <input type="text" class="form-control" id="ket_qua" name="ket_qua" 
+                           placeholder="VD: Xuất sắc, Đạt, Giỏi">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="mo_ta">
+                    <i class="fas fa-align-left"></i> Mô tả chi tiết
+                </label>
+                <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4" 
+                          placeholder="Nhập mô tả chi tiết về nội dung, phạm vi, mục đích của tài liệu..."></textarea>
+            </div>
+
+            <!-- Upload File Tài Liệu -->
+            <div class="card mb-3" style="border: 2px dashed #007bff;">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-file-upload"></i> Upload File Tài Liệu
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="file_tai_lieu">
+                            <i class="fas fa-file-pdf"></i> File tài liệu (PDF, Word, Excel, v.v.)
+                        </label>
+                        <input type="file" class="form-control" id="file_tai_lieu" name="file_tai_lieu" 
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Hỗ trợ: PDF, Word (.doc, .docx), Excel, PowerPoint. Dung lượng tối đa: 50MB
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thành viên Ban biên soạn -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-users"></i> Thành viên Ban biên soạn
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="ban_tai_lieu">
+                            <i class="fas fa-list"></i> Danh sách thành viên
+                        </label>
+                        <textarea class="form-control" id="ban_tai_lieu" name="ban_tai_lieu" rows="6" 
+                                  placeholder="Nhập vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ biên - PGS.TS. Nguyễn Văn A&#10;Phó chủ biên - TS. Trần Thị B&#10;Thành viên - ThS. Lê Văn C&#10;Thành viên - ThS. Phạm Thị D"></textarea>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>, mỗi người một dòng
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Biên bản -->
+            <div class="card mb-3">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-file-contract"></i> Upload các Biên bản
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="bien_ban_ban">
+                                    <i class="fas fa-file"></i> Biên bản Ban
+                                </label>
+                                <input type="file" class="form-control" id="bien_ban_ban" name="bien_ban_ban">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="bien_ban_de_cuong">
+                                    <i class="fas fa-file"></i> Biên bản đề cương
+                                </label>
+                                <input type="file" class="form-control" id="bien_ban_de_cuong" name="bien_ban_de_cuong">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="bien_ban_nghiem_thu">
+                                    <i class="fas fa-file"></i> Biên bản nghiệm thu
+                                </label>
+                                <input type="file" class="form-control" id="bien_ban_nghiem_thu" name="bien_ban_nghiem_thu">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hội đồng -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-users-cog"></i> Hội đồng duyệt đề cương
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="6" 
+                                          placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C"></textarea>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-user-check"></i> Hội đồng nghiệm thu
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="6" 
+                                          placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C"></textarea>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 2px solid #ddd; padding-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Lưu tài liệu
+                </button>
+                <a href="{{ url_for('main.tailieu_list') }}" class="btn btn-danger btn-lg">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+textarea.form-control {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+</style>
+{% endblock %}

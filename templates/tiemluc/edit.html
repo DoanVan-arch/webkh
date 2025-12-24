@@ -93,6 +93,45 @@
                 </div>
             </div>
 
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="chuc_danh">Chức danh (SQ CM-KT-NV)</label>
+                    <select class="form-control" id="chuc_danh" name="chuc_danh">
+                        <option value="">-- Chọn chức danh --</option>
+                        <option value="Giảng viên" {% if tiemluc.chuc_danh == 'Giảng viên' %}selected{% endif %}>Giảng viên</option>
+                        <option value="Giảng viên chính" {% if tiemluc.chuc_danh == 'Giảng viên chính' %}selected{% endif %}>Giảng viên chính</option>
+                        <option value="Giảng viên cao cấp" {% if tiemluc.chuc_danh == 'Giảng viên cao cấp' %}selected{% endif %}>Giảng viên cao cấp</option>
+                        <option value="Trợ giảng" {% if tiemluc.chuc_danh == 'Trợ giảng' %}selected{% endif %}>Trợ giảng</option>
+                        <option value="Nghiên cứu viên" {% if tiemluc.chuc_danh == 'Nghiên cứu viên' %}selected{% endif %}>Nghiên cứu viên</option>
+                        <option value="Nghiên cứu viên chính" {% if tiemluc.chuc_danh == 'Nghiên cứu viên chính' %}selected{% endif %}>Nghiên cứu viên chính</option>
+                        <option value="Nghiên cứu viên cao cấp" {% if tiemluc.chuc_danh == 'Nghiên cứu viên cao cấp' %}selected{% endif %}>Nghiên cứu viên cao cấp</option>
+                        <option value="Biên tập viên" {% if tiemluc.chuc_danh == 'Biên tập viên' %}selected{% endif %}>Biên tập viên</option>
+                        <option value="Biên tập viên chính" {% if tiemluc.chuc_danh == 'Biên tập viên chính' %}selected{% endif %}>Biên tập viên chính</option>
+                        <option value="Biên tập viên cao cấp" {% if tiemluc.chuc_danh == 'Biên tập viên cao cấp' %}selected{% endif %}>Biên tập viên cao cấp</option>
+                        <option value="Kỹ sư" {% if tiemluc.chuc_danh == 'Kỹ sư' %}selected{% endif %}>Kỹ sư</option>
+                        <option value="Kỹ sư chính" {% if tiemluc.chuc_danh == 'Kỹ sư chính' %}selected{% endif %}>Kỹ sư chính</option>
+                        <option value="Kỹ sư cao cấp" {% if tiemluc.chuc_danh == 'Kỹ sư cao cấp' %}selected{% endif %}>Kỹ sư cao cấp</option>
+                        <option value="Bác sĩ" {% if tiemluc.chuc_danh == 'Bác sĩ' %}selected{% endif %}>Bác sĩ</option>
+                        <option value="Bác sĩ chính" {% if tiemluc.chuc_danh == 'Bác sĩ chính' %}selected{% endif %}>Bác sĩ chính</option>
+                        <option value="Bác sĩ cao cấp" {% if tiemluc.chuc_danh == 'Bác sĩ cao cấp' %}selected{% endif %}>Bác sĩ cao cấp</option>
+                        <option value="Thư viện viên" {% if tiemluc.chuc_danh == 'Thư viện viên' %}selected{% endif %}>Thư viện viên</option>
+                        <option value="Thư viện viên chính" {% if tiemluc.chuc_danh == 'Thư viện viên chính' %}selected{% endif %}>Thư viện viên chính</option>
+                        <option value="Thư viện viên cao cấp" {% if tiemluc.chuc_danh == 'Thư viện viên cao cấp' %}selected{% endif %}>Thư viện viên cao cấp</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="nha_giao">Danh hiệu Nhà giáo</label>
+                    <select class="form-control" id="nha_giao" name="nha_giao">
+                        <option value="">-- Chọn danh hiệu --</option>
+                        <option value="Nhà giáo nhân dân" {% if tiemluc.nha_giao == 'Nhà giáo nhân dân' %}selected{% endif %}>Nhà giáo nhân dân</option>
+                        <option value="Nhà giáo ưu tú" {% if tiemluc.nha_giao == 'Nhà giáo ưu tú' %}selected{% endif %}>Nhà giáo ưu tú</option>
+                        <option value="Nhà giáo dạy giỏi cấp trường" {% if tiemluc.nha_giao == 'Nhà giáo dạy giỏi cấp trường' %}selected{% endif %}>Nhà giáo dạy giỏi cấp trường</option>
+                        <option value="Nhà giáo dạy giỏi cấp nhà nước" {% if tiemluc.nha_giao == 'Nhà giáo dạy giỏi cấp nhà nước' %}selected{% endif %}>Nhà giáo dạy giỏi cấp nhà nước</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label class="form-label" for="chuyen_mon">Chuyên môn</label>
                 <input type="text" class="form-control" id="chuyen_mon" name="chuyen_mon" value="{{ tiemluc.chuyen_mon or '' }}">

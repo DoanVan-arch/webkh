@@ -14,20 +14,33 @@
         <div class="navbar-container">
             <a href="{{ url_for('main.dashboard') }}" class="navbar-brand">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-                Quản lý Khoa học Quân sự
+                <span class="desktop-only">Quản lý Khoa học Quân sự</span>
+                <span class="mobile-only">QLKHQS</span>
             </a>
-            <div class="navbar-menu">
+            <button class="navbar-toggler" id="navbarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="navbar-menu" id="navbarMenu">
                 <a href="{{ url_for('main.dashboard') }}" class="nav-link">
                     <i class="fas fa-home"></i> Trang chủ
                 </a>
                 <a href="{{ url_for('main.detai_list') }}" class="nav-link">
                     <i class="fas fa-project-diagram"></i> Đề tài
                 </a>
+                <a href="{{ url_for('main.sangkien_list') }}" class="nav-link">
+                    <i class="fas fa-lightbulb"></i> Sáng kiến
+                </a>
                 <a href="{{ url_for('main.giaotrinh_list') }}" class="nav-link">
-                    <i class="fas fa-book"></i> Giáo trình
+                    <i class="fas fa-book"></i> Tài liệu
                 </a>
                 <a href="{{ url_for('main.tiemluc_list') }}" class="nav-link">
                     <i class="fas fa-users"></i> Tiềm lực
+                </a>
+                <a href="{{ url_for('main.thongke') }}" class="nav-link">
+                    <i class="fas fa-chart-bar"></i> Thống kê
+                </a>
+                <a href="{{ url_for('main.timkiem') }}" class="nav-link">
+                    <i class="fas fa-search"></i> Tìm kiếm
                 </a>
                 <div class="user-section">
                     <div class="user-info">
@@ -68,6 +81,37 @@
         setTimeout(function() {
             $('.alert').fadeOut('slow');
         }, 5000);
+
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbarToggle = document.getElementById('navbarToggle');
+            const navbarMenu = document.getElementById('navbarMenu');
+            
+            if (navbarToggle) {
+                navbarToggle.addEventListener('click', function() {
+                    navbarMenu.classList.toggle('active');
+                    this.classList.toggle('active');
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    const isClickInside = navbarToggle.contains(event.target) || navbarMenu.contains(event.target);
+                    if (!isClickInside && navbarMenu.classList.contains('active')) {
+                        navbarMenu.classList.remove('active');
+                        navbarToggle.classList.remove('active');
+                    }
+                });
+
+                // Close menu when clicking on a link
+                const navLinks = navbarMenu.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        navbarMenu.classList.remove('active');
+                        navbarToggle.classList.remove('active');
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

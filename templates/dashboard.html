@@ -23,6 +23,16 @@
 
     <div class="stat-card">
         <div class="stat-icon success">
+            <i class="fas fa-lightbulb"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ total_sangkien }}</h3>
+            <p>Sáng kiến</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon info">
             <i class="fas fa-book"></i>
         </div>
         <div class="stat-content">
@@ -40,85 +50,137 @@
             <p>Cán bộ khoa học</p>
         </div>
     </div>
+</div>
 
-    <div class="stat-card">
-        <div class="stat-icon info">
-            <i class="fas fa-user-shield"></i>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem; margin-top: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-project-diagram"></i> Đề tài nghiên cứu gần đây
         </div>
-        <div class="stat-content">
-            <h3>{{ total_users }}</h3>
-            <p>Người dùng</p>
+        <div class="card-body">
+            {% if recent_detai %}
+            <div style="overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mã đề tài</th>
+                            <th>Tên đề tài</th>
+                            <th>Chủ nhiệm</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dt in recent_detai %}
+                        <tr>
+                            <td><strong>{{ dt.ma_de_tai }}</strong></td>
+                            <td>{{ dt.ten_de_tai[:40] }}{% if dt.ten_de_tai|length > 40 %}...{% endif %}</td>
+                            <td>{{ dt.chu_nhiem }}</td>
+                            <td>
+                                {% if dt.trang_thai == 'Hoàn thành' %}
+                                <span class="badge badge-success">{{ dt.trang_thai }}</span>
+                                {% elif dt.trang_thai == 'Đang thực hiện' %}
+                                <span class="badge badge-info">{{ dt.trang_thai }}</span>
+                                {% else %}
+                                <span class="badge badge-warning">{{ dt.trang_thai }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{{ url_for('main.detai_list') }}" class="btn btn-primary">
+                    <i class="fas fa-list"></i> Xem tất cả
+                </a>
+            </div>
+            {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">Chưa có đề tài nào.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-lightbulb"></i> Sáng kiến gần đây
+        </div>
+        <div class="card-body">
+            {% if recent_sangkien %}
+            <div style="overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mã SK</th>
+                            <th>Tên sáng kiến</th>
+                            <th>Tác giả</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sk in recent_sangkien %}
+                        <tr>
+                            <td><strong>{{ sk.ma_sang_kien }}</strong></td>
+                            <td>{{ sk.ten_sang_kien[:40] }}{% if sk.ten_sang_kien|length > 40 %}...{% endif %}</td>
+                            <td>{{ sk.chu_nhiem }}</td>
+                            <td>
+                                {% if sk.trang_thai == 'Hoàn thành' or sk.trang_thai == 'Đã công nhận' %}
+                                <span class="badge badge-success">{{ sk.trang_thai }}</span>
+                                {% elif sk.trang_thai == 'Đang thực hiện' %}
+                                <span class="badge badge-info">{{ sk.trang_thai }}</span>
+                                {% else %}
+                                <span class="badge badge-warning">{{ sk.trang_thai }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{{ url_for('main.sangkien_list') }}" class="btn btn-primary">
+                    <i class="fas fa-list"></i> Xem tất cả
+                </a>
+            </div>
+            {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">Chưa có sáng kiến nào.</p>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <i class="fas fa-clock"></i> Đề tài nghiên cứu gần đây
-    </div>
-    <div class="card-body">
-        {% if recent_detai %}
-        <div style="overflow-x: auto;">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Mã đề tài</th>
-                        <th>Tên đề tài</th>
-                        <th>Chủ nhiệm</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày tạo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for dt in recent_detai %}
-                    <tr>
-                        <td><strong>{{ dt.ma_de_tai }}</strong></td>
-                        <td>{{ dt.ten_de_tai }}</td>
-                        <td>{{ dt.chu_nhiem }}</td>
-                        <td>
-                            {% if dt.trang_thai == 'Hoàn thành' %}
-                            <span class="badge badge-success">{{ dt.trang_thai }}</span>
-                            {% elif dt.trang_thai == 'Đang thực hiện' %}
-                            <span class="badge badge-info">{{ dt.trang_thai }}</span>
-                            {% else %}
-                            <span class="badge badge-warning">{{ dt.trang_thai }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ dt.created_at.strftime('%d/%m/%Y') }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p style="text-align: center; color: #999; padding: 2rem;">Chưa có đề tài nào.</p>
-        {% endif %}
-    </div>
-</div>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem;">
     <a href="{{ url_for('main.detai_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(44, 95, 45, 0.1), rgba(151, 184, 133, 0.1));">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(44, 95, 45, 0.1), rgba(151, 184, 133, 0.1)); transition: transform 0.2s;">
             <div class="card-body" style="text-align: center;">
                 <i class="fas fa-plus-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
-                <h3 style="color: var(--primary-color); margin: 0;">Thêm đề tài mới</h3>
-                <p style="color: #666; margin-top: 0.5rem;">Tạo đề tài nghiên cứu</p>
+                <h3 style="color: var(--primary-color); margin: 0;">Thêm đề tài</h3>
+                <p style="color: #666; margin-top: 0.5rem;">Tạo đề tài nghiên cứu mới</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('main.sangkien_add') }}" style="text-decoration: none;">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1)); transition: transform 0.2s;">
+            <div class="card-body" style="text-align: center;">
+                <i class="fas fa-lightbulb" style="font-size: 3rem; color: var(--success-color); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--success-color); margin: 0;">Thêm sáng kiến</h3>
+                <p style="color: #666; margin-top: 0.5rem;">Tạo sáng kiến mới</p>
             </div>
         </div>
     </a>
 
     <a href="{{ url_for('main.giaotrinh_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(32, 201, 151, 0.1)); transition: transform 0.2s;">
             <div class="card-body" style="text-align: center;">
-                <i class="fas fa-book-medical" style="font-size: 3rem; color: var(--success-color); margin-bottom: 1rem;"></i>
-                <h3 style="color: var(--success-color); margin: 0;">Thêm tài liệu</h3>
+                <i class="fas fa-book-medical" style="font-size: 3rem; color: var(--info-color); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--info-color); margin: 0;">Thêm tài liệu</h3>
                 <p style="color: #666; margin-top: 0.5rem;">Thêm giáo trình/tài liệu</p>
             </div>
         </div>
     </a>
 
     <a href="{{ url_for('main.tiemluc_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(253, 126, 20, 0.1));">
+        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(253, 126, 20, 0.1)); transition: transform 0.2s;">
             <div class="card-body" style="text-align: center;">
                 <i class="fas fa-user-plus" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
                 <h3 style="color: var(--warning-color); margin: 0;">Thêm cán bộ</h3>
@@ -127,4 +189,11 @@
         </div>
     </a>
 </div>
+
+<style>
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+</style>
 {% endblock %}

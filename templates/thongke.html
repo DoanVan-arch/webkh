@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Thống kê - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.stat-table {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.stat-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.stat-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.stat-table tr:hover {
+    background: rgba(44, 95, 45, 0.05);
+}
+
+.filter-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <h1 style="color: var(--primary-color); margin: 0;">
+        <i class="fas fa-chart-bar"></i> Thống kê tổng hợp
+    </h1>
+    <div class="export-buttons">
+        <button onclick="exportToExcel()" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </button>
+        <button onclick="exportToWord()" class="btn btn-info">
+            <i class="fas fa-file-word"></i> Xuất Word
+        </button>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print"></i> In báo cáo
+        </button>
+    </div>
+</div>
+
+<!-- Bộ lọc -->
+<div class="filter-section">
+    <h3><i class="fas fa-filter"></i> Bộ lọc thống kê</h3>
+    <form method="GET" id="filterForm">
+        <div class="filter-row">
+            <div class="form-group">
+                <label class="form-label">Đơn vị</label>
+                <select class="form-control" name="don_vi" onchange="this.form.submit()">
+                    <option value="">-- Chọn đơn vị --</option>
+                    {% for nhom, danh_sach in don_vi_list.items() %}
+                    <optgroup label="{{ nhom }}">
+                        {% for don_vi in danh_sach %}
+                        <option value="{{ don_vi }}">{{ don_vi }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Năm</label>
+                <select class="form-control" name="nam" onchange="this.form.submit()">
+                    <option value="">-- Tất cả năm --</option>
+                    {% for year in range(2020, 2026) %}
+                    <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Loại thống kê</label>
+                <select class="form-control" name="type" onchange="this.form.submit()">
+                    <option value="all">Tất cả</option>
+                    <option value="detai">Đề tài</option>
+                    <option value="sangkien">Sáng kiến</option>
+                    <option value="tailieu">Tài liệu</option>
+                    <option value="tiemluc">Tiềm lực</option>
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Thống kê tổng quan -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ don_vi_stats|length }}</h3>
+            <p>Đơn vị có đề tài</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class="fas fa-lightbulb"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ sangkien_stats|length }}</h3>
+            <p>Đơn vị có sáng kiến</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon info">
+            <i class="fas fa-book"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ tailieu_stats|length }}</h3>
+            <p>Loại tài liệu</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ tiemluc_stats|length }}</h3>
+            <p>Đơn vị có tiềm lực</p>
+        </div>
+    </div>
+</div>
+
+<!-- Thống kê đề tài theo đơn vị -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-project-diagram"></i> Thống kê đề tài theo đơn vị
+    </div>
+    <div class="card-body">
+        <div style="overflow-x: auto;">
+            <table class="stat-table" id="detaiTable">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Đơn vị</th>
+                        <th>Số lượng đề tài</th>
+                        <th>Tỷ lệ (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_detai = don_vi_stats|sum(attribute='total') or 1 %}
+                    {% for stat in don_vi_stats %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ stat.don_vi or 'Chưa xác định' }}</strong></td>
+                        <td>{{ stat.total }}</td>
+                        <td>{{ "%.2f"|format((stat.total / total_detai * 100)) }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #f0f0f0; font-weight: bold;">
+                        <td colspan="2">TỔNG CỘNG</td>
+                        <td>{{ total_detai }}</td>
+                        <td>100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Thống kê sáng kiến theo đơn vị -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-lightbulb"></i> Thống kê sáng kiến theo đơn vị
+    </div>
+    <div class="card-body">
+        <div style="overflow-x: auto;">
+            <table class="stat-table" id="sangkienTable">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Đơn vị</th>
+                        <th>Số lượng sáng kiến</th>
+                        <th>Tỷ lệ (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_sangkien = sangkien_stats|sum(attribute='total') or 1 %}
+                    {% for stat in sangkien_stats %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ stat.don_vi or 'Chưa xác định' }}</strong></td>
+                        <td>{{ stat.total }}</td>
+                        <td>{{ "%.2f"|format((stat.total / total_sangkien * 100)) }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #f0f0f0; font-weight: bold;">
+                        <td colspan="2">TỔNG CỘNG</td>
+                        <td>{{ total_sangkien }}</td>
+                        <td>100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Thống kê tài liệu theo loại -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-book"></i> Thống kê tài liệu theo loại
+    </div>
+    <div class="card-body">
+        <div style="overflow-x: auto;">
+            <table class="stat-table" id="tailieuTable">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Loại tài liệu</th>
+                        <th>Số lượng</th>
+                        <th>Tỷ lệ (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_tailieu = tailieu_stats|sum(attribute='total') or 1 %}
+                    {% for stat in tailieu_stats %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ stat.loai or 'Chưa xác định' }}</strong></td>
+                        <td>{{ stat.total }}</td>
+                        <td>{{ "%.2f"|format((stat.total / total_tailieu * 100)) }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #f0f0f0; font-weight: bold;">
+                        <td colspan="2">TỔNG CỘNG</td>
+                        <td>{{ total_tailieu }}</td>
+                        <td>100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Thống kê tiềm lực theo đơn vị -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-users"></i> Thống kê tiềm lực theo đơn vị
+    </div>
+    <div class="card-body">
+        <div style="overflow-x: auto;">
+            <table class="stat-table" id="tiemlucTable">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Đơn vị</th>
+                        <th>Số lượng cán bộ</th>
+                        <th>Tỷ lệ (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_tiemluc = tiemluc_stats|sum(attribute='total') or 1 %}
+                    {% for stat in tiemluc_stats %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ stat.don_vi or 'Chưa xác định' }}</strong></td>
+                        <td>{{ stat.total }}</td>
+                        <td>{{ "%.2f"|format((stat.total / total_tiemluc * 100)) }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #f0f0f0; font-weight: bold;">
+                        <td colspan="2">TỔNG CỘNG</td>
+                        <td>{{ total_tiemluc }}</td>
+                        <td>100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Thống kê trạng thái đề tài -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-tasks"></i> Thống kê trạng thái đề tài
+    </div>
+    <div class="card-body">
+        <div style="overflow-x: auto;">
+            <table class="stat-table" id="trangthaiTable">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Trạng thái</th>
+                        <th>Số lượng</th>
+                        <th>Tỷ lệ (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_tt = detai_trangthai|sum(attribute='total') or 1 %}
+                    {% for stat in detai_trangthai %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ stat.trang_thai or 'Chưa xác định' }}</strong></td>
+                        <td>{{ stat.total }}</td>
+                        <td>{{ "%.2f"|format((stat.total / total_tt * 100)) }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #f0f0f0; font-weight: bold;">
+                        <td colspan="2">TỔNG CỘNG</td>
+                        <td>{{ total_tt }}</td>
+                        <td>100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+function exportToExcel() {
+    // Tạo workbook mới
+    const wb = XLSX.utils.book_new();
+    
+    // Xuất từng bảng
+    const tables = ['detaiTable', 'sangkienTable', 'tailieuTable', 'tiemlucTable', 'trangthaiTable'];
+    const sheetNames = ['Đề tài', 'Sáng kiến', 'Tài liệu', 'Tiềm lực', 'Trạng thái'];
+    
+    tables.forEach((tableId, index) => {
+        const table = document.getElementById(tableId);
+        if (table) {
+            const ws = XLSX.utils.table_to_sheet(table);
+            XLSX.utils.book_append_sheet(wb, ws, sheetNames[index]);
+        }
+    });
+    
+    // Lưu file
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `ThongKe_KhoaHoc_${date}.xlsx`);
+}
+
+function exportToWord() {
+    // Lấy nội dung HTML
+    const content = document.querySelector('.container').innerHTML;
+    
+    // Tạo HTML cho Word
+    const html = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+              xmlns:w='urn:schemas-microsoft-com:office:word' 
+              xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+            <meta charset='utf-8'>
+            <title>Báo cáo thống kê</title>
+            <style>
+                body { font-family: 'Times New Roman', serif; font-size: 13pt; }
+                h1 { text-align: center; color: #2c5f2d; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                th { background-color: #2c5f2d; color: white; }
+                .export-buttons, .filter-section { display: none; }
+            </style>
+        </head>
+        <body>
+            <h1>BÁO CÁO THỐNG KÊ KHOA HỌC QUÂN SỰ</h1>
+            <p style="text-align: center;">Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}</p>
+            ${content}
+        </body>
+        </html>
+    `;
+    
+    // Tạo blob và download
+    const blob = new Blob(['\ufeff', html], {
+        type: 'application/msword'
+    });
+    
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const date = new Date().toISOString().split('T')[0];
+    link.download = `BaoCao_ThongKe_${date}.doc`;
+    link.click();
+}
+
+// CSS cho in ấn
+const style = document.createElement('style');
+style.innerHTML = `
+    @media print {
+        .export-buttons, .filter-section, .navbar, .btn { display: none !important; }
+        .card { page-break-inside: avoid; }
+        body { background: white !important; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa tài liệu - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.tailieu_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-edit"></i> Chỉnh sửa tài liệu: {{ tailieu.ma_tai_lieu }}
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <!-- Thông tin cơ bản -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ma_tai_lieu">
+                        <i class="fas fa-barcode"></i> Mã tài liệu <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="ma_tai_lieu" name="ma_tai_lieu" value="{{ tailieu.ma_tai_lieu }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loai">
+                        <i class="fas fa-tags"></i> Loại tài liệu
+                    </label>
+                    <select class="form-control" id="loai" name="loai">
+                        <option value="Giáo trình" {% if tailieu.loai == 'Giáo trình' %}selected{% endif %}>Giáo trình</option>
+                        <option value="Tài liệu" {% if tailieu.loai == 'Tài liệu' %}selected{% endif %}>Tài liệu</option>
+                        <option value="Sách tham khảo" {% if tailieu.loai == 'Sách tham khảo' %}selected{% endif %}>Sách tham khảo</option>
+                        <option value="Bài báo" {% if tailieu.loai == 'Bài báo' %}selected{% endif %}>Bài báo</option>
+                        <option value="Bài giảng" {% if tailieu.loai == 'Bài giảng' %}selected{% endif %}>Bài giảng</option>
+                        <option value="Đề cương" {% if tailieu.loai == 'Đề cương' %}selected{% endif %}>Đề cương</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ten_tai_lieu">
+                    <i class="fas fa-book"></i> Tên tài liệu <span style="color: red;">*</span>
+                </label>
+                <input type="text" class="form-control" id="ten_tai_lieu" name="ten_tai_lieu" value="{{ tailieu.ten_tai_lieu }}" required>
+            </div>
+
+            <!-- Tác giả (nhiều người) -->
+            <div class="form-group">
+                <label class="form-label" for="tac_gia">
+                    <i class="fas fa-users"></i> Tác giả <span style="color: red;">*</span>
+                </label>
+                <textarea class="form-control" id="tac_gia" name="tac_gia" rows="4" required 
+                          placeholder="Nhập tên các tác giả, mỗi tác giả một dòng.&#10;Ví dụ:&#10;PGS.TS. Nguyễn Văn A&#10;TS. Trần Thị B&#10;ThS. Lê Văn C">{{ tailieu.tac_gia or '' }}</textarea>
+                <small class="form-text text-muted">
+                    <i class="fas fa-info-circle"></i> Nhập mỗi tác giả trên một dòng. Có thể có nhiều tác giả.
+                </small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="mon_hoc">
+                        <i class="fas fa-chalkboard-teacher"></i> Môn học
+                    </label>
+                    <input type="text" class="form-control" id="mon_hoc" name="mon_hoc" value="{{ tailieu.mon_hoc or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="linh_vuc">
+                        <i class="fas fa-flask"></i> Lĩnh vực
+                    </label>
+                    <input type="text" class="form-control" id="linh_vuc" name="linh_vuc" value="{{ tailieu.linh_vuc or '' }}">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="nha_xuat_ban">
+                        <i class="fas fa-building"></i> Nhà xuất bản
+                    </label>
+                    <input type="text" class="form-control" id="nha_xuat_ban" name="nha_xuat_ban" value="{{ tailieu.nha_xuat_ban or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="nam_xuat_ban">
+                        <i class="fas fa-calendar"></i> Năm xuất bản
+                    </label>
+                    <input type="number" class="form-control" id="nam_xuat_ban" name="nam_xuat_ban" value="{{ tailieu.nam_xuat_ban or '' }}" min="1900" max="2100">
+                </div>
+            </div>
+
+            <!-- Ngày thực hiện -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="ngay_bat_dau">
+                        <i class="fas fa-calendar-plus"></i> Ngày bắt đầu
+                    </label>
+                    <input type="date" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau" 
+                           value="{{ tailieu.ngay_bat_dau.strftime('%Y-%m-%d') if tailieu.ngay_bat_dau else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ngay_ket_thuc">
+                        <i class="fas fa-calendar-check"></i> Ngày hoàn thành
+                    </label>
+                    <input type="date" class="form-control" id="ngay_ket_thuc" name="ngay_ket_thuc" 
+                           value="{{ tailieu.ngay_ket_thuc.strftime('%Y-%m-%d') if tailieu.ngay_ket_thuc else '' }}">
+                </div>
+            </div>
+
+            <!-- Trạng thái -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label" for="trang_thai">
+                        <i class="fas fa-tasks"></i> Trạng thái
+                    </label>
+                    <select class="form-control" id="trang_thai" name="trang_thai">
+                        <option value="Đang thực hiện" {% if tailieu.trang_thai == 'Đang thực hiện' %}selected{% endif %}>Đang thực hiện</option>
+                        <option value="Hoàn thành" {% if tailieu.trang_thai == 'Hoàn thành' %}selected{% endif %}>Hoàn thành</option>
+                        <option value="Đã xuất bản" {% if tailieu.trang_thai == 'Đã xuất bản' %}selected{% endif %}>Đã xuất bản</option>
+                        <option value="Tạm dừng" {% if tailieu.trang_thai == 'Tạm dừng' %}selected{% endif %}>Tạm dừng</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ket_qua">
+                        <i class="fas fa-trophy"></i> Kết quả/Xếp loại
+                    </label>
+                    <input type="text" class="form-control" id="ket_qua" name="ket_qua" value="{{ tailieu.ket_qua or '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="mo_ta">
+                    <i class="fas fa-align-left"></i> Mô tả chi tiết
+                </label>
+                <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4">{{ tailieu.mo_ta or '' }}</textarea>
+            </div>
+
+            <!-- File tài liệu đã upload -->
+            {% if tailieu.file_tai_lieu %}
+            <div class="alert alert-success">
+                <i class="fas fa-file-check"></i> File đã có: 
+                <a href="{{ url_for('static', filename='uploads/tailieu/' + tailieu.file_tai_lieu) }}" target="_blank" class="btn btn-sm btn-primary">
+                    <i class="fas fa-download"></i> Tải xuống file hiện tại
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Upload File Tài Liệu -->
+            <div class="card mb-3" style="border: 2px dashed #007bff;">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-file-upload"></i> Upload File Tài Liệu {% if tailieu.file_tai_lieu %}(Thay thế file cũ){% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="file_tai_lieu">
+                            <i class="fas fa-file-pdf"></i> File tài liệu (PDF, Word, Excel, v.v.)
+                        </label>
+                        <input type="file" class="form-control" id="file_tai_lieu" name="file_tai_lieu" 
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> {% if tailieu.file_tai_lieu %}Chọn file mới để thay thế file cũ. Để trống nếu không muốn thay đổi.{% else %}Hỗ trợ: PDF, Word, Excel, PowerPoint. Dung lượng tối đa: 50MB{% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thành viên Ban biên soạn -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-users"></i> Thành viên Ban biên soạn
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="ban_tai_lieu">
+                            <i class="fas fa-list"></i> Danh sách thành viên
+                        </label>
+                        <textarea class="form-control" id="ban_tai_lieu" name="ban_tai_lieu" rows="6" 
+                                  placeholder="Nhập vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ biên - PGS.TS. Nguyễn Văn A&#10;Phó chủ biên - TS. Trần Thị B&#10;Thành viên - ThS. Lê Văn C">{{ tailieu.ban_tai_lieu or '' }}</textarea>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>, mỗi người một dòng
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Biên bản -->
+            <div class="card mb-3">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-file-contract"></i> Upload các Biên bản
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="bien_ban_ban">
+                                    <i class="fas fa-file"></i> Biên bản Ban
+                                </label>
+                                {% if tailieu.bien_ban_ban %}
+                                <div class="mb-2">
+                                    <a href="{{ url_for('static', filename='uploads/tailieu/' + tailieu.bien_ban_ban) }}" target="_blank" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Đã có file
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <input type="file" class="form-control" id="bien_ban_ban" name="bien_ban_ban">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="bien_ban_de_cuong">
+                                    <i class="fas fa-file"></i> Biên bản đề cương
+                                </label>
+                                {% if tailieu.bien_ban_de_cuong %}
+                                <div class="mb-2">
+                                    <a href="{{ url_for('static', filename='uploads/tailieu/' + tailieu.bien_ban_de_cuong) }}" target="_blank" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Đã có file
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <input type="file" class="form-control" id="bien_ban_de_cuong" name="bien_ban_de_cuong">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="bien_ban_nghiem_thu">
+                                    <i class="fas fa-file"></i> Biên bản nghiệm thu
+                                </label>
+                                {% if tailieu.bien_ban_nghiem_thu %}
+                                <div class="mb-2">
+                                    <a href="{{ url_for('static', filename='uploads/tailieu/' + tailieu.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Đã có file
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <input type="file" class="form-control" id="bien_ban_nghiem_thu" name="bien_ban_nghiem_thu">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hội đồng -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-users-cog"></i> Hội đồng duyệt đề cương
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="6" 
+                                          placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C">{{ tailieu.hoi_dong_de_cuong or '' }}</textarea>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-user-check"></i> Hội đồng nghiệm thu
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="6" 
+                                          placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C">{{ tailieu.hoi_dong_nghiem_thu or '' }}</textarea>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 2px solid #ddd; padding-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+                <a href="{{ url_for('main.tailieu_list') }}" class="btn btn-danger btn-lg">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+textarea.form-control {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+</style>
+{% endblock %}
