@@ -12,7 +12,9 @@ UPLOAD_FOLDERS = {
     'tailieu': 'static/uploads/tailieu',
     'sangkien': 'static/uploads/sangkien',
     'tiemluc': 'static/uploads/tiemluc',
-    'bien_ban': 'static/uploads/bien_ban',
+    'bien_ban_nghiem_thu': 'static/uploads/bien_ban_nghiem_thu',
+    'bien_ban_ban': 'static/uploads/bien_ban_ban',
+    'bien_ban_de_cuong': 'static/uploads/bien_ban_de_cuong',
     'other': 'static/uploads/other'
 }
 

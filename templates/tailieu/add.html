@@ -167,44 +167,52 @@
                 <textarea class="form-control" id="mo_ta" name="mo_ta" rows="4" 
                           placeholder="Nhập mô tả chi tiết về nội dung, phạm vi, mục đích của tài liệu..."></textarea>
             </div>
-
-            <!-- Upload File Tài Liệu -->
-            <div class="card mb-3" style="border: 2px dashed #007bff;">
-                <div class="card-header bg-primary text-white">
-                    <i class="fas fa-file-upload"></i> Upload File Tài Liệu
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    
+                    <label class="form-label" for="ban_sang_kien">Thành viên ban biên soạn</label>
+                    <textarea class="form-control" id="ban_tai_lieu" name="ban_tai_lieu" rows="6" 
+                    placeholder="Nhập vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ biên - PGS.TS. Nguyễn Văn A&#10;Phó chủ biên - TS. Trần Thị B&#10;Thành viên - ThS. Lê Văn C&#10;Thành viên - ThS. Phạm Thị D"></textarea>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>, mỗi người một dòng
+                    </small>
                 </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label class="form-label" for="file_tai_lieu">
-                            <i class="fas fa-file-pdf"></i> File tài liệu (PDF, Word, Excel, v.v.)
-                        </label>
-                        <input type="file" class="form-control" id="file_tai_lieu" name="file_tai_lieu" 
+
+                <div class="form-group">
+                    <label class="form-label" for="hoi_dong_de_cuong">Hội đồng duyệt đề cương</label>
+                    <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="6" 
+                    placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C"></textarea>
+          <small class="form-text text-muted">
+              <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
+          </small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="hoi_dong_nghiem_thu">Hội đồng nghiệm thu</label>
+                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="6" 
+                placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C"></textarea>
+      <small class="form-text text-muted">
+          <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
+      </small>
+            </div>
+
+           
+
+            <div class="form-group">
+                <label class="form-label" for="file_sau_sua">
+                    <i class="fas fa-file-upload"></i> File tài liệu sau khi sửa
+                </label>
+                <input type="file" class="form-control" id="file_tai_lieu" name="file_tai_lieu" 
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Hỗ trợ: PDF, Word (.doc, .docx), Excel, PowerPoint. Dung lượng tối đa: 50MB
-                        </small>
-                    </div>
-                </div>
+                <small class="form-text text-muted">
+                    <i class="fas fa-info-circle"></i> Hỗ trợ: PDF, Word (.doc, .docx), Excel, PowerPoint. Dung lượng tối đa: 50MB
+                </small>
             </div>
+            <!-- Upload File Tài Liệu -->
+           
 
-            <!-- Thành viên Ban biên soạn -->
-            <div class="card mb-3">
-                <div class="card-header bg-info text-white">
-                    <i class="fas fa-users"></i> Thành viên Ban biên soạn
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label class="form-label" for="ban_tai_lieu">
-                            <i class="fas fa-list"></i> Danh sách thành viên
-                        </label>
-                        <textarea class="form-control" id="ban_tai_lieu" name="ban_tai_lieu" rows="6" 
-                                  placeholder="Nhập vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ biên - PGS.TS. Nguyễn Văn A&#10;Phó chủ biên - TS. Trần Thị B&#10;Thành viên - ThS. Lê Văn C&#10;Thành viên - ThS. Phạm Thị D"></textarea>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>, mỗi người một dòng
-                        </small>
-                    </div>
-                </div>
-            </div>
+           
 
             <!-- Upload Biên bản -->
             <div class="card mb-3">
@@ -241,41 +249,7 @@
                 </div>
             </div>
 
-            <!-- Hội đồng -->
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-header bg-warning text-dark">
-                            <i class="fas fa-users-cog"></i> Hội đồng duyệt đề cương
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <textarea class="form-control" id="hoi_dong_de_cuong" name="hoi_dong_de_cuong" rows="6" 
-                                          placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C"></textarea>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-header bg-success text-white">
-                            <i class="fas fa-user-check"></i> Hội đồng nghiệm thu
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <textarea class="form-control" id="hoi_dong_nghiem_thu" name="hoi_dong_nghiem_thu" rows="6" 
-                                          placeholder="Vai trò - Họ tên, mỗi thành viên một dòng.&#10;Ví dụ:&#10;Chủ tịch - GS.TS. Nguyễn Văn A&#10;Phản biện 1 - PGS.TS. Trần Thị B&#10;Thư ký - TS. Lê Văn C"></textarea>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> Định dạng: <strong>Vai trò - Họ tên</strong>
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+           
 
             <!-- Buttons -->
             <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 2px solid #ddd; padding-top: 1.5rem;">

@@ -142,7 +142,7 @@
             {% if tailieu.file_tai_lieu %}
             <div class="alert alert-success">
                 <i class="fas fa-file-check"></i> File đã có: 
-                <a href="{{ url_for('static', filename='uploads/tailieu/' + tailieu.file_tai_lieu) }}" target="_blank" class="btn btn-sm btn-primary">
+                <a href="{{ url_for('static', filename='uploads/' + tailieu.file_tai_lieu) }}" target="_blank" class="btn btn-sm btn-primary">
                     <i class="fas fa-download"></i> Tải xuống file hiện tại
                 </a>
             </div>
@@ -200,7 +200,7 @@
                                 </label>
                                 {% if tailieu.bien_ban_ban %}
                                 <div class="mb-2">
-                                    <a href="{{ url_for('static', filename='uploads/bien_ban_ban/' + tailieu.bien_ban_ban) }}" target="_blank" class="btn btn-sm btn-success">
+                                    <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_ban) }}" target="_blank" class="btn btn-sm btn-success">
                                         <i class="fas fa-check"></i> Đã có file
                                     </a>
                                 </div>
@@ -215,7 +215,7 @@
                                 </label>
                                 {% if tailieu.bien_ban_de_cuong %}
                                 <div class="mb-2">
-                                    <a href="{{ url_for('static', filename='uploads/bien_ban_de_cuong/' + tailieu.bien_ban_de_cuong) }}" target="_blank" class="btn btn-sm btn-success">
+                                    <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_de_cuong) }}" target="_blank" class="btn btn-sm btn-success">
                                         <i class="fas fa-check"></i> Đã có file
                                     </a>
                                 </div>
@@ -230,7 +230,7 @@
                                 </label>
                                 {% if tailieu.bien_ban_nghiem_thu %}
                                 <div class="mb-2">
-                                    <a href="{{ url_for('static', filename='uploads/bien_ban_nghiem_thu/' + tailieu.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-sm btn-success">
+                                    <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-sm btn-success">
                                         <i class="fas fa-check"></i> Đã có file
                                     </a>
                                 </div>
