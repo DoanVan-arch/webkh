@@ -126,6 +126,121 @@
         {% endif %}
     </div>
 </div>
+<!-- THỐNG KÊ THEO ĐƠN VỊ -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+        <i class="fas fa-chart-pie"></i> Thống kê sáng kiến theo đơn vị
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5><i class="fas fa-building"></i> Phân bố theo đơn vị</h5>
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover table-striped">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th style="width: 60px;">STT</th>
+                                <th>Đơn vị</th>
+                                <th style="width: 120px; text-align: center;">Số lượng</th>
+                                <th style="width: 150px;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span>Tỷ lệ</span>
+                                        <i class="fas fa-percentage" style="font-size: 0.9rem;"></i>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in donvi_stats %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>
+                                    <i class="fas fa-university" style="color: #f5576c; margin-right: 0.5rem;"></i>
+                                    <strong>{{ stat.don_vi }}</strong>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        {{ stat.total }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% set percent = (stat.total / total_sangkien * 100) if total_sangkien > 0 else 0 %}
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="flex: 1; background: #e9ecef; height: 25px; border-radius: 12px; overflow: hidden;">
+                                            <div style="width: {{ percent }}%; background: linear-gradient(90deg, #f093fb, #f5576c); height: 100%; 
+                                                       display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: bold; transition: width 0.3s;">
+                                                {% if percent >= 15 %}{{ "%.1f"|format(percent) }}%{% endif %}
+                                            </div>
+                                        </div>
+                                        {% if percent < 15 %}
+                                        <span style="font-size: 0.9rem; font-weight: bold; color: #f5576c; min-width: 50px;">
+                                            {{ "%.1f"|format(percent) }}%
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background-color: #f0f0f0; font-weight: bold; border-top: 2px solid #f5576c;">
+                                <td colspan="2" style="text-align: right; padding-right: 1rem;">
+                                    <i class="fas fa-calculator"></i> TỔNG CỘNG
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-success" style="font-size: 1.1rem; padding: 0.6rem 1.2rem;">
+                                        {{ total_sangkien }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-info" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        100%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <h5><i class="fas fa-tasks"></i> Trạng thái sáng kiến</h5>
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>Trạng thái</th>
+                                <th style="width: 100px; text-align: center;">Số lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in trangthai_stats %}
+                            <tr>
+                                <td>
+                                    {% if stat.trang_thai == 'Hoàn thành' %}
+                                        <i class="fas fa-check-circle" style="color: #43e97b; margin-right: 0.5rem;"></i>
+                                    {% elif stat.trang_thai == 'Đang thực hiện' %}
+                                        <i class="fas fa-spinner" style="color: #4facfe; margin-right: 0.5rem;"></i>
+                                    {% elif stat.trang_thai == 'Chờ duyệt' %}
+                                        <i class="fas fa-clock" style="color: #ffa726; margin-right: 0.5rem;"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle" style="color: #999; margin-right: 0.5rem;"></i>
+                                    {% endif %}
+                                    <strong>{{ stat.trang_thai }}</strong>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.4rem 0.9rem;">
+                                        {{ stat.total }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <style>
 .table {

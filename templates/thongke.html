@@ -16,6 +16,19 @@
     padding: 1.5rem;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 400px;
+}
+
+.chart-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .export-buttons {
@@ -60,6 +73,65 @@
     gap: 1rem;
     margin-bottom: 1rem;
 }
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.summary-card.success {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.summary-card.info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.summary-card.warning {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.summary-card h3 {
+    font-size: 2.5rem;
+    margin: 0.5rem 0;
+    font-weight: bold;
+}
+
+.summary-card p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+@media print {
+    .export-buttons, .filter-section, .navbar, .btn { 
+        display: none !important; 
+    }
+    .card { 
+        page-break-inside: avoid; 
+    }
+    body { 
+        background: white !important; 
+    }
+    .chart-container {
+        page-break-inside: avoid;
+    }
+}
 </style>
 {% endblock %}
 
@@ -69,12 +141,12 @@
         <i class="fas fa-chart-bar"></i> Thống kê tổng hợp
     </h1>
     <div class="export-buttons">
-        <button onclick="exportToExcel()" class="btn btn-success">
+        <a href="{{ url_for('main.thongke_export_excel', don_vi=request.args.get('don_vi', ''), nam=request.args.get('nam', '')) }}" class="btn btn-success">
             <i class="fas fa-file-excel"></i> Xuất Excel
-        </button>
-        <button onclick="exportToWord()" class="btn btn-info">
+        </a>
+        <a href="{{ url_for('main.thongke_export_word', don_vi=request.args.get('don_vi', ''), nam=request.args.get('nam', '')) }}" class="btn btn-info">
             <i class="fas fa-file-word"></i> Xuất Word
-        </button>
+        </a>
         <button onclick="window.print()" class="btn btn-primary">
             <i class="fas fa-print"></i> In báo cáo
         </button>
@@ -89,11 +161,11 @@
             <div class="form-group">
                 <label class="form-label">Đơn vị</label>
                 <select class="form-control" name="don_vi" onchange="this.form.submit()">
-                    <option value="">-- Chọn đơn vị --</option>
+                    <option value="">-- Tất cả đơn vị --</option>
                     {% for nhom, danh_sach in don_vi_list.items() %}
                     <optgroup label="{{ nhom }}">
                         {% for don_vi in danh_sach %}
-                        <option value="{{ don_vi }}">{{ don_vi }}</option>
+                        <option value="{{ don_vi }}" {% if request.args.get('don_vi') == don_vi %}selected{% endif %}>{{ don_vi }}</option>
                         {% endfor %}
                     </optgroup>
                     {% endfor %}
@@ -103,19 +175,9 @@
                 <label class="form-label">Năm</label>
                 <select class="form-control" name="nam" onchange="this.form.submit()">
                     <option value="">-- Tất cả năm --</option>
-                    {% for year in range(2020, 2026) %}
-                    <option value="{{ year }}">{{ year }}</option>
+                    {% for year in range(2020, 2027) %}
+                    <option value="{{ year }}" {% if request.args.get('nam') == year|string %}selected{% endif %}>{{ year }}</option>
                     {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Loại thống kê</label>
-                <select class="form-control" name="type" onchange="this.form.submit()">
-                    <option value="all">Tất cả</option>
-                    <option value="detai">Đề tài</option>
-                    <option value="sangkien">Sáng kiến</option>
-                    <option value="tailieu">Tài liệu</option>
-                    <option value="tiemluc">Tiềm lực</option>
                 </select>
             </div>
         </div>
@@ -123,45 +185,229 @@
 </div>
 
 <!-- Thống kê tổng quan -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon primary">
-            <i class="fas fa-project-diagram"></i>
+<div class="summary-stats">
+    <div class="summary-card primary">
+        <i class="fas fa-project-diagram" style="font-size: 2rem;"></i>
+        <h3>{{ total_detai }}</h3>
+        <p>Tổng đề tài</p>
+    </div>
+
+    <div class="summary-card success">
+        <i class="fas fa-lightbulb" style="font-size: 2rem;"></i>
+        <h3>{{ total_sangkien }}</h3>
+        <p>Tổng sáng kiến</p>
+    </div>
+
+    <div class="summary-card info">
+        <i class="fas fa-book" style="font-size: 2rem;"></i>
+        <h3>{{ total_tailieu }}</h3>
+        <p>Tổng tài liệu</p>
+    </div>
+
+    <div class="summary-card warning">
+        <i class="fas fa-users" style="font-size: 2rem;"></i>
+        <h3>{{ total_tiemluc }}</h3>
+        <p>Tổng tiềm lực</p>
+    </div>
+</div>
+
+<!-- MỚI: So sánh năm hiện tại với năm trước -->
+<div class="chart-container">
+    <h3><i class="fas fa-chart-line"></i> So sánh hoạt động KHCN: Năm {{ current_year }} vs Năm {{ previous_year }}</h3>
+    <div class="summary-stats" style="margin-top: 1.5rem;">
+        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">Đề tài {{ current_year }}</p>
+                    <h3 style="font-size: 2.5rem;">{{ detai_current_count }}</h3>
+                </div>
+                <div style="text-align: right;">
+                    {% if detai_change_percent > 0 %}
+                    <div style="color: #43e97b; font-size: 1.2rem; font-weight: bold;">
+                        <i class="fas fa-arrow-up"></i> +{{ "%.1f"|format(detai_change_percent) }}%
+                    </div>
+                    {% elif detai_change_percent < 0 %}
+                    <div style="color: #f5576c; font-size: 1.2rem; font-weight: bold;">
+                        <i class="fas fa-arrow-down"></i> {{ "%.1f"|format(detai_change_percent) }}%
+                    </div>
+                    {% else %}
+                    <div style="color: white; font-size: 1.2rem; font-weight: bold;">
+                        <i class="fas fa-minus"></i> 0%
+                    </div>
+                    {% endif %}
+                    <p style="font-size: 0.8rem; margin-top: 0.3rem;">so với {{ previous_year }}: {{ detai_previous_count }}</p>
+                </div>
+            </div>
         </div>
-        <div class="stat-content">
-            <h3>{{ don_vi_stats|length }}</h3>
-            <p>Đơn vị có đề tài</p>
+
+        <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">Sáng kiến {{ current_year }}</p>
+                    <h3 style="font-size: 2.5rem;">{{ sangkien_current_count }}</h3>
+                </div>
+                <div style="text-align: right;">
+                    {% if sangkien_change_percent > 0 %}
+                    <div style="color: #43e97b; font-size: 1.2rem; font-weight: bold;">
+                        <i class="fas fa-arrow-up"></i> +{{ "%.1f"|format(sangkien_change_percent) }}%
+                    </div>
+                    {% elif sangkien_change_percent < 0 %}
+                    <div style="color: #f5576c; font-size: 1.2rem; font-weight: bold;">
+                        <i class="fas fa-arrow-down"></i> {{ "%.1f"|format(sangkien_change_percent) }}%
+                    </div>
+                    {% else %}
+                    <div style="color: white; font-size: 1.2rem; font-weight: bold;">
+                        <i class="fas fa-minus"></i> 0%
+                    </div>
+                    {% endif %}
+                    <p style="font-size: 0.8rem; margin-top: 0.3rem;">so với {{ previous_year }}: {{ sangkien_previous_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div style="text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                <h3 style="font-size: 2.5rem; margin: 0.5rem 0;">{{ "%.1f"|format(completion_rate) }}%</h3>
+                <p style="margin: 0;">Tỷ lệ hoàn thành đề tài</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MỚI: Top 5 đơn vị xuất sắc -->
+<div class="chart-row">
+    <div class="chart-container">
+        <h3><i class="fas fa-trophy"></i> Top 5 đơn vị có nhiều đề tài nhất</h3>
+        <div style="margin-top: 1rem;">
+            {% for item in top_detai_list %}
+            <div style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: linear-gradient(90deg, 
+                {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %}15, transparent); 
+                border-left: 4px solid {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %}; 
+                border-radius: 8px;">
+                <div style="width: 40px; height: 40px; background: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %}; 
+                    color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin-right: 1rem;">
+                    {{ loop.index }}
+                </div>
+                <div style="flex: 1;">
+                    <strong style="font-size: 1.1rem;">{{ item.don_vi }}</strong>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.5rem; font-weight: bold; color: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %};">
+                        {{ item.total }}
+                    </span>
+                    <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">đề tài</span>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-icon success">
-            <i class="fas fa-lightbulb"></i>
+    <div class="chart-container">
+        <h3><i class="fas fa-trophy"></i> Top 5 đơn vị có nhiều sáng kiến nhất</h3>
+        <div style="margin-top: 1rem;">
+            {% for item in top_sangkien_list %}
+            <div style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: linear-gradient(90deg, 
+                {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %}15, transparent); 
+                border-left: 4px solid {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %}; 
+                border-radius: 8px;">
+                <div style="width: 40px; height: 40px; background: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %}; 
+                    color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin-right: 1rem;">
+                    {{ loop.index }}
+                </div>
+                <div style="flex: 1;">
+                    <strong style="font-size: 1.1rem;">{{ item.don_vi }}</strong>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.5rem; font-weight: bold; color: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %};">
+                        {{ item.total }}
+                    </span>
+                    <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">sáng kiến</span>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        <div class="stat-content">
-            <h3>{{ sangkien_stats|length }}</h3>
-            <p>Đơn vị có sáng kiến</p>
+    </div>
+</div>
+
+<!-- MỚI: Thống kê theo quý -->
+<div class="chart-container">
+    <h3><i class="fas fa-calendar-alt"></i> Hoạt động KHCN theo quý năm {{ current_year }}</h3>
+    <div class="chart-wrapper">
+        <canvas id="quarterChart"></canvas>
+    </div>
+</div>
+
+<!-- Biểu đồ xu hướng theo thời gian -->
+<div class="chart-container">
+    <h3><i class="fas fa-chart-line"></i> Xu hướng hoạt động khoa học theo năm</h3>
+    <div class="chart-wrapper">
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
+<!-- Biểu đồ tròn và cột -->
+<div class="chart-row">
+    <!-- Biểu đồ đề tài theo đơn vị -->
+    <div class="chart-container">
+        <h3><i class="fas fa-chart-pie"></i> Đề tài theo đơn vị</h3>
+        <div class="chart-wrapper">
+            <canvas id="detaiPieChart"></canvas>
         </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-icon info">
-            <i class="fas fa-book"></i>
+    <!-- Biểu đồ sáng kiến theo đơn vị -->
+    <div class="chart-container">
+        <h3><i class="fas fa-chart-pie"></i> Sáng kiến theo đơn vị</h3>
+        <div class="chart-wrapper">
+            <canvas id="sangkienPieChart"></canvas>
         </div>
-        <div class="stat-content">
-            <h3>{{ tailieu_stats|length }}</h3>
-            <p>Loại tài liệu</p>
+    </div>
+</div>
+
+<!-- Biểu đồ cột -->
+<div class="chart-row">
+    <!-- Biểu đồ trạng thái đề tài -->
+    <div class="chart-container">
+        <h3><i class="fas fa-chart-bar"></i> Trạng thái đề tài</h3>
+        <div class="chart-wrapper">
+            <canvas id="trangthaiChart"></canvas>
         </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-icon warning">
-            <i class="fas fa-users"></i>
+    <!-- Biểu đồ cấp độ đề tài -->
+    <div class="chart-container">
+        <h3><i class="fas fa-chart-bar"></i> Đề tài theo cấp độ</h3>
+        <div class="chart-wrapper">
+            <canvas id="capdoChart"></canvas>
         </div>
-        <div class="stat-content">
-            <h3>{{ tiemluc_stats|length }}</h3>
-            <p>Đơn vị có tiềm lực</p>
+    </div>
+</div>
+
+<!-- Biểu đồ tiềm lực -->
+<div class="chart-row">
+    <!-- Biểu đồ học vị -->
+    <div class="chart-container">
+        <h3><i class="fas fa-graduation-cap"></i> Tiềm lực theo học vị</h3>
+        <div class="chart-wrapper">
+            <canvas id="hocviChart"></canvas>
         </div>
+    </div>
+
+    <!-- Biểu đồ học hàm -->
+    <div class="chart-container">
+        <h3><i class="fas fa-user-graduate"></i> Tiềm lực theo học hàm</h3>
+        <div class="chart-wrapper">
+            <canvas id="hochamChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Biểu đồ tài liệu theo loại -->
+<div class="chart-container">
+    <h3><i class="fas fa-book-open"></i> Tài liệu theo loại</h3>
+    <div class="chart-wrapper">
+        <canvas id="tailieuChart"></canvas>
     </div>
 </div>
 
@@ -182,13 +428,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set total_detai = don_vi_stats|sum(attribute='total') or 1 %}
+                    {% set total = total_detai or 1 %}
                     {% for stat in don_vi_stats %}
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ stat.don_vi or 'Chưa xác định' }}</strong></td>
                         <td>{{ stat.total }}</td>
-                        <td>{{ "%.2f"|format((stat.total / total_detai * 100)) }}%</td>
+                        <td>{{ "%.2f"|format((stat.total / total * 100)) }}%</td>
                     </tr>
                     {% endfor %}
                     <tr style="background: #f0f0f0; font-weight: bold;">
@@ -219,13 +465,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set total_sangkien = sangkien_stats|sum(attribute='total') or 1 %}
+                    {% set total = total_sangkien or 1 %}
                     {% for stat in sangkien_stats %}
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ stat.don_vi or 'Chưa xác định' }}</strong></td>
                         <td>{{ stat.total }}</td>
-                        <td>{{ "%.2f"|format((stat.total / total_sangkien * 100)) }}%</td>
+                        <td>{{ "%.2f"|format((stat.total / total * 100)) }}%</td>
                     </tr>
                     {% endfor %}
                     <tr style="background: #f0f0f0; font-weight: bold;">
@@ -256,13 +502,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set total_tailieu = tailieu_stats|sum(attribute='total') or 1 %}
+                    {% set total = total_tailieu or 1 %}
                     {% for stat in tailieu_stats %}
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ stat.loai or 'Chưa xác định' }}</strong></td>
                         <td>{{ stat.total }}</td>
-                        <td>{{ "%.2f"|format((stat.total / total_tailieu * 100)) }}%</td>
+                        <td>{{ "%.2f"|format((stat.total / total * 100)) }}%</td>
                     </tr>
                     {% endfor %}
                     <tr style="background: #f0f0f0; font-weight: bold;">
@@ -293,13 +539,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set total_tiemluc = tiemluc_stats|sum(attribute='total') or 1 %}
+                    {% set total = total_tiemluc or 1 %}
                     {% for stat in tiemluc_stats %}
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ stat.don_vi or 'Chưa xác định' }}</strong></td>
                         <td>{{ stat.total }}</td>
-                        <td>{{ "%.2f"|format((stat.total / total_tiemluc * 100)) }}%</td>
+                        <td>{{ "%.2f"|format((stat.total / total * 100)) }}%</td>
                     </tr>
                     {% endfor %}
                     <tr style="background: #f0f0f0; font-weight: bold;">
@@ -313,120 +559,468 @@
     </div>
 </div>
 
-<!-- Thống kê trạng thái đề tài -->
-<div class="card">
-    <div class="card-header">
-        <i class="fas fa-tasks"></i> Thống kê trạng thái đề tài
-    </div>
-    <div class="card-body">
-        <div style="overflow-x: auto;">
-            <table class="stat-table" id="trangthaiTable">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Trạng thái</th>
-                        <th>Số lượng</th>
-                        <th>Tỷ lệ (%)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% set total_tt = detai_trangthai|sum(attribute='total') or 1 %}
-                    {% for stat in detai_trangthai %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td><strong>{{ stat.trang_thai or 'Chưa xác định' }}</strong></td>
-                        <td>{{ stat.total }}</td>
-                        <td>{{ "%.2f"|format((stat.total / total_tt * 100)) }}%</td>
-                    </tr>
-                    {% endfor %}
-                    <tr style="background: #f0f0f0; font-weight: bold;">
-                        <td colspan="2">TỔNG CỘNG</td>
-                        <td>{{ total_tt }}</td>
-                        <td>100%</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
-function exportToExcel() {
-    // Tạo workbook mới
-    const wb = XLSX.utils.book_new();
-    
-    // Xuất từng bảng
-    const tables = ['detaiTable', 'sangkienTable', 'tailieuTable', 'tiemlucTable', 'trangthaiTable'];
-    const sheetNames = ['Đề tài', 'Sáng kiến', 'Tài liệu', 'Tiềm lực', 'Trạng thái'];
-    
-    tables.forEach((tableId, index) => {
-        const table = document.getElementById(tableId);
-        if (table) {
-            const ws = XLSX.utils.table_to_sheet(table);
-            XLSX.utils.book_append_sheet(wb, ws, sheetNames[index]);
+// Cấu hình chung cho các biểu đồ
+Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+Chart.defaults.font.size = 13;
+
+// Màu sắc đẹp cho biểu đồ
+const chartColors = [
+    '#667eea', '#764ba2', '#f093fb', '#f5576c',
+    '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+    '#fa709a', '#fee140', '#30cfd0', '#330867',
+    '#a8edea', '#fed6e3', '#fbc2eb', '#a6c1ee'
+];
+
+// 1. Biểu đồ xu hướng theo thời gian (Line Chart)
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: {{ detai_by_year | map(attribute='year') | list | tojson }},
+        datasets: [{
+            label: 'Đề tài',
+            data: {{ detai_by_year | map(attribute='count') | list | tojson }},
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }, {
+            label: 'Sáng kiến',
+            data: {{ sangkien_by_year | map(attribute='count') | list | tojson }},
+            borderColor: '#f5576c',
+            backgroundColor: 'rgba(245, 87, 108, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }, {
+            label: 'Tài liệu',
+            data: {{ tailieu_by_year | map(attribute='count') | list | tojson }},
+            borderColor: '#4facfe',
+            backgroundColor: 'rgba(79, 172, 254, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 15
+                }
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 13 }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
         }
-    });
-    
-    // Lưu file
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `ThongKe_KhoaHoc_${date}.xlsx`);
-}
-
-function exportToWord() {
-    // Lấy nội dung HTML
-    const content = document.querySelector('.container').innerHTML;
-    
-    // Tạo HTML cho Word
-    const html = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' 
-              xmlns:w='urn:schemas-microsoft-com:office:word' 
-              xmlns='http://www.w3.org/TR/REC-html40'>
-        <head>
-            <meta charset='utf-8'>
-            <title>Báo cáo thống kê</title>
-            <style>
-                body { font-family: 'Times New Roman', serif; font-size: 13pt; }
-                h1 { text-align: center; color: #2c5f2d; }
-                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-                th { background-color: #2c5f2d; color: white; }
-                .export-buttons, .filter-section { display: none; }
-            </style>
-        </head>
-        <body>
-            <h1>BÁO CÁO THỐNG KÊ KHOA HỌC QUÂN SỰ</h1>
-            <p style="text-align: center;">Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}</p>
-            ${content}
-        </body>
-        </html>
-    `;
-    
-    // Tạo blob và download
-    const blob = new Blob(['\ufeff', html], {
-        type: 'application/msword'
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const date = new Date().toISOString().split('T')[0];
-    link.download = `BaoCao_ThongKe_${date}.doc`;
-    link.click();
-}
-
-// CSS cho in ấn
-const style = document.createElement('style');
-style.innerHTML = `
-    @media print {
-        .export-buttons, .filter-section, .navbar, .btn { display: none !important; }
-        .card { page-break-inside: avoid; }
-        body { background: white !important; }
     }
-`;
-document.head.appendChild(style);
+});
+
+// 2. Biểu đồ tròn đề tài theo đơn vị
+const detaiPieCtx = document.getElementById('detaiPieChart').getContext('2d');
+new Chart(detaiPieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ don_vi_stats | map(attribute='don_vi') | list | tojson }},
+        datasets: [{
+            data: {{ don_vi_stats | map(attribute='total') | list | tojson }},
+            backgroundColor: chartColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'right',
+                labels: {
+                    padding: 10,
+                    usePointStyle: true,
+                    font: { size: 11 }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// 3. Biểu đồ tròn sáng kiến theo đơn vị
+const sangkienPieCtx = document.getElementById('sangkienPieChart').getContext('2d');
+new Chart(sangkienPieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ sangkien_stats | map(attribute='don_vi') | list | tojson }},
+        datasets: [{
+            data: {{ sangkien_stats | map(attribute='total') | list | tojson }},
+            backgroundColor: chartColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'right',
+                labels: {
+                    padding: 10,
+                    usePointStyle: true,
+                    font: { size: 11 }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// 4. Biểu đồ cột trạng thái đề tài
+const trangthaiCtx = document.getElementById('trangthaiChart').getContext('2d');
+new Chart(trangthaiCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ detai_trangthai | map(attribute='trang_thai') | list | tojson }},
+        datasets: [{
+            label: 'Số lượng đề tài',
+            data: {{ detai_trangthai | map(attribute='total') | list | tojson }},
+            backgroundColor: [
+                'rgba(102, 126, 234, 0.8)',
+                'rgba(245, 87, 108, 0.8)',
+                'rgba(67, 233, 123, 0.8)',
+                'rgba(79, 172, 254, 0.8)'
+            ],
+            borderColor: [
+                '#667eea',
+                '#f5576c',
+                '#43e97b',
+                '#4facfe'
+            ],
+            borderWidth: 2,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// 5. Biểu đồ cột cấp độ đề tài
+const capdoCtx = document.getElementById('capdoChart').getContext('2d');
+new Chart(capdoCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ detai_by_capdo | map(attribute='cap_do') | list | tojson }},
+        datasets: [{
+            label: 'Số lượng đề tài',
+            data: {{ detai_by_capdo | map(attribute='total') | list | tojson }},
+            backgroundColor: 'rgba(118, 75, 162, 0.8)',
+            borderColor: '#764ba2',
+            borderWidth: 2,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// 6. Biểu đồ học vị
+const hocviCtx = document.getElementById('hocviChart').getContext('2d');
+new Chart(hocviCtx, {
+    type: 'polarArea',
+    data: {
+        labels: {{ hocvi_stats | map(attribute='hoc_vi') | list | tojson }},
+        datasets: [{
+            data: {{ hocvi_stats | map(attribute='total') | list | tojson }},
+            backgroundColor: [
+                'rgba(102, 126, 234, 0.7)',
+                'rgba(245, 87, 108, 0.7)',
+                'rgba(67, 233, 123, 0.7)',
+                'rgba(79, 172, 254, 0.7)',
+                'rgba(240, 147, 251, 0.7)'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'right',
+                labels: {
+                    padding: 10,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+
+// 7. Biểu đồ học hàm
+const hochamCtx = document.getElementById('hochamChart').getContext('2d');
+new Chart(hochamCtx, {
+    type: 'polarArea',
+    data: {
+        labels: {{ hocham_stats | map(attribute='hoc_ham') | list | tojson }},
+        datasets: [{
+            data: {{ hocham_stats | map(attribute='total') | list | tojson }},
+            backgroundColor: [
+                'rgba(240, 147, 251, 0.7)',
+                'rgba(67, 233, 123, 0.7)',
+                'rgba(79, 172, 254, 0.7)',
+                'rgba(245, 87, 108, 0.7)'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'right',
+                labels: {
+                    padding: 10,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+
+// 8. Biểu đồ tài liệu theo loại
+const tailieuCtx = document.getElementById('tailieuChart').getContext('2d');
+new Chart(tailieuCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ tailieu_stats | map(attribute='loai') | list | tojson }},
+        datasets: [{
+            label: 'Số lượng tài liệu',
+            data: {{ tailieu_stats | map(attribute='total') | list | tojson }},
+            backgroundColor: chartColors.map(color => color + 'CC'),
+            borderColor: chartColors,
+            borderWidth: 2,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            y: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// 9. Biểu đồ hoạt động KHCN theo quý
+const quarterCtx = document.getElementById('quarterChart').getContext('2d');
+new Chart(quarterCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+        datasets: [{
+            label: 'Đề tài',
+            data: {{ detai_by_quarter | map(attribute='count') | list | tojson }},
+            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+            borderColor: '#667eea',
+            borderWidth: 2,
+            borderRadius: 8
+        }, {
+            label: 'Sáng kiến',
+            data: {{ sangkien_by_quarter | map(attribute='count') | list | tojson }},
+            backgroundColor: 'rgba(245, 87, 108, 0.8)',
+            borderColor: '#f5576c',
+            borderWidth: 2,
+            borderRadius: 8
+        }, {
+            label: 'Tài liệu',
+            data: {{ tailieu_by_quarter | map(attribute='count') | list | tojson }},
+            backgroundColor: 'rgba(79, 172, 254, 0.8)',
+            borderColor: '#4facfe',
+            borderWidth: 2,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 15
+                }
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 13 }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+        }
+    }
+});
 </script>
 {% endblock %}

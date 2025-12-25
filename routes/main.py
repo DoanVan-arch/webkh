@@ -29,7 +29,7 @@ def index():
 @login_required
 def dashboard():
     """Trang dashboard"""
-    # Thống kê
+    # Thống kê - Đếm tổng số trong database
     total_detai = DeTai.query.count()
     total_tailieu = TaiLieu.query.count()
     total_tiemluc = TiemLuc.query.count()
@@ -39,37 +39,116 @@ def dashboard():
     # Đề tài gần đây
     recent_detai = DeTai.query.order_by(DeTai.created_at.desc()).limit(5).all()
     
+    # Sáng kiến gần đây
+    recent_sangkien = SangKien.query.order_by(SangKien.created_at.desc()).limit(5).all()
+    
     return render_template('dashboard.html',
                          total_detai=total_detai,
                          total_giaotrinh=total_tailieu,  # Giữ tên biến cũ để tương thích template
                          total_tiemluc=total_tiemluc,
                          total_sangkien=total_sangkien,
                          total_users=total_users,
-                         recent_detai=recent_detai)
+                         recent_detai=recent_detai,
+                         recent_sangkien=recent_sangkien)
 
 # ==================== QUẢN LÝ ĐỀ TÀI ====================
 @main_bp.route('/detai')
 @login_required
 def detai_list():
-    """Danh sách đề tài"""
+    """Danh sách đề tài với phân trang và thống kê theo đơn vị"""
     page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '', type=str)
+    per_page = 20
+    search = request.args.get('search', '')
     
     query = DeTai.query
+    
+    # Lọc theo đơn vị nếu không phải admin
+    if current_user.role != 'admin':
+        query = query.filter_by(don_vi=current_user.don_vi)
+    
+    # Tìm kiếm
     if search:
         query = query.filter(
             db.or_(
-                DeTai.ten_de_tai.contains(search),
                 DeTai.ma_de_tai.contains(search),
-                DeTai.chu_nhiem.contains(search)
+                DeTai.ten_de_tai.contains(search),
+                DeTai.chu_nhiem.contains(search),
+                DeTai.don_vi.contains(search)
             )
         )
     
     pagination = query.order_by(DeTai.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False
+        page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('detai/list.html', pagination=pagination, search=search)
+    # ========== THỐNG KÊ THEO ĐƠN VỊ ==========
+    stats_query = db.session.query(
+        DeTai.don_vi,
+        func.count(DeTai.id).label('total')
+    )
+    
+    if current_user.role != 'admin':
+        stats_query = stats_query.filter(DeTai.don_vi == current_user.don_vi)
+    
+    if search:
+        stats_query = stats_query.filter(
+            db.or_(
+                DeTai.ma_de_tai.contains(search),
+                DeTai.ten_de_tai.contains(search),
+                DeTai.chu_nhiem.contains(search),
+                DeTai.don_vi.contains(search)
+            )
+        )
+    
+    donvi_stats = stats_query.group_by(DeTai.don_vi).order_by(func.count(DeTai.id).desc()).all()
+    donvi_stats = [{'don_vi': dv or 'Chưa xác định', 'total': total} for dv, total in donvi_stats]
+    
+    # Thống kê theo cấp độ
+    capdo_stats = db.session.query(
+        DeTai.cap_do,
+        func.count(DeTai.id).label('total')
+    )
+    if current_user.role != 'admin':
+        capdo_stats = capdo_stats.filter(DeTai.don_vi == current_user.don_vi)
+    if search:
+        capdo_stats = capdo_stats.filter(
+            db.or_(
+                DeTai.ma_de_tai.contains(search),
+                DeTai.ten_de_tai.contains(search),
+                DeTai.chu_nhiem.contains(search)
+            )
+        )
+    capdo_stats = capdo_stats.group_by(DeTai.cap_do).all()
+    capdo_stats = [{'cap_do': cd or 'Chưa xác định', 'total': total} for cd, total in capdo_stats]
+    
+    # Thống kê theo trạng thái
+    trangthai_stats = db.session.query(
+        DeTai.trang_thai,
+        func.count(DeTai.id).label('total')
+    )
+    if current_user.role != 'admin':
+        trangthai_stats = trangthai_stats.filter(DeTai.don_vi == current_user.don_vi)
+    if search:
+        trangthai_stats = trangthai_stats.filter(
+            db.or_(
+                DeTai.ma_de_tai.contains(search),
+                DeTai.ten_de_tai.contains(search),
+                DeTai.chu_nhiem.contains(search)
+            )
+        )
+    trangthai_stats = trangthai_stats.group_by(DeTai.trang_thai).all()
+    trangthai_stats = [{'trang_thai': tt or 'Chưa xác định', 'total': total} for tt, total in trangthai_stats]
+    
+    # Tổng số
+    total_detai = sum(s['total'] for s in donvi_stats)
+    
+    return render_template('detai/list.html', 
+                         pagination=pagination, 
+                         search=search,
+                         donvi_stats=donvi_stats,
+                         capdo_stats=capdo_stats,
+                         trangthai_stats=trangthai_stats,
+                         total_detai=total_detai)
 
 @main_bp.route('/detai/add', methods=['GET', 'POST'])
 @login_required
@@ -109,17 +188,17 @@ def detai_add():
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
-                detai.bien_ban_ban = save_uploaded_file(file, folder_name)
+                detai.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
         
         if 'bien_ban_de_cuong' in request.files:
             file = request.files['bien_ban_de_cuong']
             if file and file.filename:
-                detai.bien_ban_de_cuong = save_uploaded_file(file, folder_name)
+                detai.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
         
         if 'bien_ban_nghiem_thu' in request.files:
             file = request.files['bien_ban_nghiem_thu']
             if file and file.filename:
-                detai.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name)
+                detai.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
         
         # Xử lý thêm thành viên Ban đề tài
         ban_de_tai_text = request.form.get('ban_de_tai', '').strip()
@@ -217,22 +296,22 @@ def detai_edit(id):
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
-                detai.bien_ban_ban = save_uploaded_file(file, folder_name)
+                detai.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
         
         if 'bien_ban_de_cuong' in request.files:
             file = request.files['bien_ban_de_cuong']
             if file and file.filename:
-                detai.bien_ban_de_cuong = save_uploaded_file(file, folder_name)
+                detai.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
         
         if 'bien_ban_nghiem_thu' in request.files:
             file = request.files['bien_ban_nghiem_thu']
             if file and file.filename:
-                detai.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name)
+                detai.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
         
         if 'file_sau_sua' in request.files:
             file = request.files['file_sau_sua']
             if file and file.filename:
-                detai.file_sau_sua = save_uploaded_file(file, folder_name)
+                detai.file_sau_sua = save_uploaded_file(file, folder_name,category='detai')
         
         # ======== CẬP NHẬT THÀNH VIÊN BAN ĐỀ TÀI ========
         # Xóa toàn bộ thành viên cũ
@@ -322,31 +401,83 @@ def detai_delete(id):
 @main_bp.route('/tailieu')
 @login_required
 def tailieu_list():
-    """Danh sách tài liệu"""
+    """Danh sách tài liệu với phân trang và thống kê theo đơn vị"""
     page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '', type=str)
-    loai = request.args.get('loai', '', type=str)
+    per_page = 20
+    search = request.args.get('search', '')
     
     query = TaiLieu.query
+    
+    # Lọc theo đơn vị nếu không phải admin
+    if current_user.role != 'admin':
+        query = query.filter_by(don_vi=current_user.don_vi)
+    
+    # Tìm kiếm
     if search:
         query = query.filter(
             db.or_(
-                TaiLieu.ten_tai_lieu.contains(search),
                 TaiLieu.ma_tai_lieu.contains(search),
-                TaiLieu.tac_gia.contains(search),  # Đổi từ chu_nhiem sang tac_gia
+                TaiLieu.ten_tai_lieu.contains(search),
+                TaiLieu.tac_gia.contains(search),
                 TaiLieu.don_vi.contains(search)
             )
         )
     
-    if loai:
-        query = query.filter(TaiLieu.loai == loai)
-    
     pagination = query.order_by(TaiLieu.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False
+        page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('tailieu/list.html', pagination=pagination, search=search, loai=loai, loai_list=LOAI_TAI_LIEU)
-
+    # ========== THỐNG KÊ THEO ĐƠN VỊ ==========
+    stats_query = db.session.query(
+        TaiLieu.don_vi,
+        func.count(TaiLieu.id).label('total')
+    )
+    
+    # Nếu không phải admin, chỉ thống kê đơn vị của mình
+    if current_user.role != 'admin':
+        stats_query = stats_query.filter(TaiLieu.don_vi == current_user.don_vi)
+    
+    # Nếu có tìm kiếm, áp dụng vào thống kê
+    if search:
+        stats_query = stats_query.filter(
+            db.or_(
+                TaiLieu.ma_tai_lieu.contains(search),
+                TaiLieu.ten_tai_lieu.contains(search),
+                TaiLieu.tac_gia.contains(search),
+                TaiLieu.don_vi.contains(search)
+            )
+        )
+    
+    donvi_stats = stats_query.group_by(TaiLieu.don_vi).order_by(func.count(TaiLieu.id).desc()).all()
+    donvi_stats = [{'don_vi': dv or 'Chưa xác định', 'total': total} for dv, total in donvi_stats]
+    
+    # Thống kê theo loại
+    loai_stats = db.session.query(
+        TaiLieu.loai,
+        func.count(TaiLieu.id).label('total')
+    )
+    if current_user.role != 'admin':
+        loai_stats = loai_stats.filter(TaiLieu.don_vi == current_user.don_vi)
+    if search:
+        loai_stats = loai_stats.filter(
+            db.or_(
+                TaiLieu.ma_tai_lieu.contains(search),
+                TaiLieu.ten_tai_lieu.contains(search),
+                TaiLieu.tac_gia.contains(search)
+            )
+        )
+    loai_stats = loai_stats.group_by(TaiLieu.loai).all()
+    loai_stats = [{'loai': loai or 'Chưa xác định', 'total': total} for loai, total in loai_stats]
+    
+    # Tổng số
+    total_tailieu = sum(s['total'] for s in donvi_stats)
+    
+    return render_template('tailieu/list.html', 
+                         pagination=pagination, 
+                         search=search,
+                         donvi_stats=donvi_stats,
+                         loai_stats=loai_stats,
+                         total_tailieu=total_tailieu)
 # Route tương thích với tên cũ
 @main_bp.route('/giaotrinh')
 @login_required
@@ -394,28 +525,28 @@ def tailieu_add():
         if 'file_tai_lieu' in request.files:
             file = request.files['file_tai_lieu']
             if file and file.filename:
-                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name)
+                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name,category='tailieu')
         
         # Xử lý upload các file
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
-                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name)
+                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
         
         if 'bien_ban_de_cuong' in request.files:
             file = request.files['bien_ban_de_cuong']
             if file and file.filename:
-                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name)
+                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
         
         if 'bien_ban_nghiem_thu' in request.files:
             file = request.files['bien_ban_nghiem_thu']
             if file and file.filename:
-                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name)
+                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
         
         if 'file_sau_sua' in request.files:
             file = request.files['file_sau_sua']
             if file and file.filename:
-                tailieu.file_sau_sua = save_uploaded_file(file, folder_name)
+                tailieu.file_sau_sua = save_uploaded_file(file, folder_name,category='tailieu')
         
         # Xử lý thêm thành viên Ban tài liệu
         ban_tai_lieu_text = request.form.get('ban_tai_lieu', '').strip()
@@ -521,28 +652,28 @@ def tailieu_edit(id):
         if 'file_tai_lieu' in request.files:
             file = request.files['file_tai_lieu']
             if file and file.filename:
-                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name)
+                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name,category='tailieu')
         
         # Xử lý upload các file (chỉ upload nếu có file mới)
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
-                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name)
+                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
         
         if 'bien_ban_de_cuong' in request.files:
             file = request.files['bien_ban_de_cuong']
             if file and file.filename:
-                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name)
+                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
         
         if 'bien_ban_nghiem_thu' in request.files:
             file = request.files['bien_ban_nghiem_thu']
             if file and file.filename:
-                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name)
+                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
         
         if 'file_sau_sua' in request.files:
             file = request.files['file_sau_sua']
             if file and file.filename:
-                tailieu.file_sau_sua = save_uploaded_file(file, folder_name)
+                tailieu.file_sau_sua = save_uploaded_file(file, folder_name,category='tailieu')
         
         # ======== CẬP NHẬT THÀNH VIÊN BAN TÀI LIỆU ========
         # Xóa toàn bộ thành viên cũ
@@ -647,25 +778,98 @@ def giaotrinh_delete(id):
 @main_bp.route('/tiemluc')
 @login_required
 def tiemluc_list():
-    """Danh sách tiềm lực khoa học"""
+    """Danh sách tiềm lực với phân trang và thống kê theo đơn vị"""
     page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '', type=str)
+    per_page = 20
+    search = request.args.get('search', '')
     
     query = TiemLuc.query
+    
+    # Lọc theo đơn vị nếu không phải admin
+    if current_user.role != 'admin':
+        query = query.filter_by(don_vi=current_user.don_vi)
+    
+    # Tìm kiếm
     if search:
         query = query.filter(
             db.or_(
                 TiemLuc.ho_ten.contains(search),
-                TiemLuc.ma_can_bo.contains(search),
+                TiemLuc.hoc_vi.contains(search),
+                TiemLuc.hoc_ham.contains(search),
                 TiemLuc.don_vi.contains(search)
             )
         )
     
     pagination = query.order_by(TiemLuc.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False
+        page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('tiemluc/list.html', pagination=pagination, search=search)
+    # ========== THỐNG KÊ THEO ĐƠN VỊ ==========
+    stats_query = db.session.query(
+        TiemLuc.don_vi,
+        func.count(TiemLuc.id).label('total')
+    )
+    
+    if current_user.role != 'admin':
+        stats_query = stats_query.filter(TiemLuc.don_vi == current_user.don_vi)
+    
+    if search:
+        stats_query = stats_query.filter(
+            db.or_(
+                TiemLuc.ho_ten.contains(search),
+                TiemLuc.hoc_vi.contains(search),
+                TiemLuc.hoc_ham.contains(search),
+                TiemLuc.don_vi.contains(search)
+            )
+        )
+    
+    donvi_stats = stats_query.group_by(TiemLuc.don_vi).order_by(func.count(TiemLuc.id).desc()).all()
+    donvi_stats = [{'don_vi': dv or 'Chưa xác định', 'total': total} for dv, total in donvi_stats]
+    
+    # Thống kê theo học vị
+    hocvi_stats = db.session.query(
+        TiemLuc.hoc_vi,
+        func.count(TiemLuc.id).label('total')
+    ).filter(TiemLuc.hoc_vi.isnot(None))
+    if current_user.role != 'admin':
+        hocvi_stats = hocvi_stats.filter(TiemLuc.don_vi == current_user.don_vi)
+    if search:
+        hocvi_stats = hocvi_stats.filter(
+            db.or_(
+                TiemLuc.ho_ten.contains(search),
+                TiemLuc.don_vi.contains(search)
+            )
+        )
+    hocvi_stats = hocvi_stats.group_by(TiemLuc.hoc_vi).all()
+    hocvi_stats = [{'hoc_vi': hv or 'Chưa có', 'total': total} for hv, total in hocvi_stats]
+    
+    # Thống kê theo học hàm
+    hocham_stats = db.session.query(
+        TiemLuc.hoc_ham,
+        func.count(TiemLuc.id).label('total')
+    ).filter(TiemLuc.hoc_ham.isnot(None))
+    if current_user.role != 'admin':
+        hocham_stats = hocham_stats.filter(TiemLuc.don_vi == current_user.don_vi)
+    if search:
+        hocham_stats = hocham_stats.filter(
+            db.or_(
+                TiemLuc.ho_ten.contains(search),
+                TiemLuc.don_vi.contains(search)
+            )
+        )
+    hocham_stats = hocham_stats.group_by(TiemLuc.hoc_ham).all()
+    hocham_stats = [{'hoc_ham': hh or 'Chưa có', 'total': total} for hh, total in hocham_stats]
+    
+    # Tổng số
+    total_tiemluc = sum(s['total'] for s in donvi_stats)
+    
+    return render_template('tiemluc/list.html', 
+                         pagination=pagination, 
+                         search=search,
+                         donvi_stats=donvi_stats,
+                         hocvi_stats=hocvi_stats,
+                         hocham_stats=hocham_stats,
+                         total_tiemluc=total_tiemluc)
 
 @main_bp.route('/tiemluc/add', methods=['GET', 'POST'])
 @login_required
@@ -764,25 +968,81 @@ def tiemluc_delete(id):
 @main_bp.route('/sangkien')
 @login_required
 def sangkien_list():
-    """Danh sách sáng kiến"""
+    """Danh sách sáng kiến với phân trang và thống kê theo đơn vị"""
     page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '', type=str)
+    per_page = 20
+    search = request.args.get('search', '')
     
     query = SangKien.query
+    
+    # Lọc theo đơn vị nếu không phải admin
+    if current_user.role != 'admin':
+        query = query.filter_by(don_vi=current_user.don_vi)
+    
+    # Tìm kiếm
     if search:
         query = query.filter(
             db.or_(
-                SangKien.ten_sang_kien.contains(search),
                 SangKien.ma_sang_kien.contains(search),
-                SangKien.chu_nhiem.contains(search)
+                SangKien.ten_sang_kien.contains(search),
+                SangKien.chu_nhiem.contains(search),
+                SangKien.don_vi.contains(search)
             )
         )
     
     pagination = query.order_by(SangKien.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False
+        page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('sangkien/list.html', pagination=pagination, search=search)
+    # ========== THỐNG KÊ THEO ĐƠN VỊ ==========
+    stats_query = db.session.query(
+        SangKien.don_vi,
+        func.count(SangKien.id).label('total')
+    )
+    
+    if current_user.role != 'admin':
+        stats_query = stats_query.filter(SangKien.don_vi == current_user.don_vi)
+    
+    if search:
+        stats_query = stats_query.filter(
+            db.or_(
+                SangKien.ma_sang_kien.contains(search),
+                SangKien.ten_sang_kien.contains(search),
+                SangKien.chu_nhiem.contains(search),
+                SangKien.don_vi.contains(search)
+            )
+        )
+    
+    donvi_stats = stats_query.group_by(SangKien.don_vi).order_by(func.count(SangKien.id).desc()).all()
+    donvi_stats = [{'don_vi': dv or 'Chưa xác định', 'total': total} for dv, total in donvi_stats]
+    
+    # Thống kê theo trạng thái
+    trangthai_stats = db.session.query(
+        SangKien.trang_thai,
+        func.count(SangKien.id).label('total')
+    )
+    if current_user.role != 'admin':
+        trangthai_stats = trangthai_stats.filter(SangKien.don_vi == current_user.don_vi)
+    if search:
+        trangthai_stats = trangthai_stats.filter(
+            db.or_(
+                SangKien.ma_sang_kien.contains(search),
+                SangKien.ten_sang_kien.contains(search),
+                SangKien.chu_nhiem.contains(search)
+            )
+        )
+    trangthai_stats = trangthai_stats.group_by(SangKien.trang_thai).all()
+    trangthai_stats = [{'trang_thai': tt or 'Chưa xác định', 'total': total} for tt, total in trangthai_stats]
+    
+    # Tổng số
+    total_sangkien = sum(s['total'] for s in donvi_stats)
+    
+    return render_template('sangkien/list.html', 
+                         pagination=pagination, 
+                         search=search,
+                         donvi_stats=donvi_stats,
+                         trangthai_stats=trangthai_stats,
+                         total_sangkien=total_sangkien)
 
 @main_bp.route('/sangkien/add', methods=['GET', 'POST'])
 @login_required
@@ -829,22 +1089,22 @@ def sangkien_add():
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
-                sangkien.bien_ban_ban = save_uploaded_file(file, folder_name)
+                sangkien.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
         
         if 'bien_ban_de_cuong' in request.files:
             file = request.files['bien_ban_de_cuong']
             if file and file.filename:
-                sangkien.bien_ban_de_cuong = save_uploaded_file(file, folder_name)
+                sangkien.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
         
         if 'bien_ban_nghiem_thu' in request.files:
             file = request.files['bien_ban_nghiem_thu']
             if file and file.filename:
-                sangkien.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name)
+                sangkien.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
         
         if 'file_sau_sua' in request.files:
             file = request.files['file_sau_sua']
             if file and file.filename:
-                sangkien.file_sau_sua = save_uploaded_file(file, folder_name)
+                sangkien.file_sau_sua = save_uploaded_file(file, folder_name,category='sangkien')
         
         # Xử lý thêm thành viên Ban sáng kiến
         ban_sang_kien_text = request.form.get('ban_sang_kien', '').strip()
@@ -942,22 +1202,22 @@ def sangkien_edit(id):
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
-                sangkien.bien_ban_ban = save_uploaded_file(file, folder_name)
+                sangkien.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
         
         if 'bien_ban_de_cuong' in request.files:
             file = request.files['bien_ban_de_cuong']
             if file and file.filename:
-                sangkien.bien_ban_de_cuong = save_uploaded_file(file, folder_name)
+                sangkien.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
         
         if 'bien_ban_nghiem_thu' in request.files:
             file = request.files['bien_ban_nghiem_thu']
             if file and file.filename:
-                sangkien.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name)
+                sangkien.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
         
         if 'file_sau_sua' in request.files:
             file = request.files['file_sau_sua']
             if file and file.filename:
-                sangkien.file_sau_sua = save_uploaded_file(file, folder_name)
+                sangkien.file_sau_sua = save_uploaded_file(file, folder_name,category='sangkien')
         
         # ======== CẬP NHẬT THÀNH VIÊN BAN SÁNG KIẾN ========
         # Xóa toàn bộ thành viên cũ
@@ -1047,162 +1307,286 @@ def sangkien_delete(id):
 @main_bp.route('/thongke')
 @login_required
 def thongke():
-    """Trang thống kê tổng hợp"""
+    """Trang thống kê tổng hợp với biểu đồ nâng cao"""
     # Lấy tham số lọc
     don_vi_filter = request.args.get('don_vi', '')
     nam_filter = request.args.get('nam', '')
-    loai_filter = request.args.get('loai', 'donvi')  # donvi hoặc canhan
+    type_filter = request.args.get('type', 'all')
     
-    # Base query cho đề tài
-    detai_query = DeTai.query
-    sangkien_query = SangKien.query
-    tailieu_query = TaiLieu.query
-    tiemluc_query = TiemLuc.query
-    
-    # Áp dụng bộ lọc đơn vị
-    if don_vi_filter:
-        detai_query = detai_query.filter(DeTai.don_vi == don_vi_filter)
-        sangkien_query = sangkien_query.filter(SangKien.don_vi == don_vi_filter)
-        tailieu_query = tailieu_query.filter(TaiLieu.don_vi == don_vi_filter)
-        tiemluc_query = tiemluc_query.filter(TiemLuc.don_vi == don_vi_filter)
-    
-    # Áp dụng bộ lọc năm
+    # Năm hiện tại và năm trước
+    current_year = datetime.now().year
     if nam_filter:
-        nam = int(nam_filter)
-        detai_query = detai_query.filter(func.extract('year', DeTai.ngay_bat_dau) == nam)
-        sangkien_query = sangkien_query.filter(func.extract('year', SangKien.ngay_bat_dau) == nam)
-        tailieu_query = tailieu_query.filter(func.extract('year', TaiLieu.ngay_bat_dau) == nam)
+        current_year = int(nam_filter)
+    previous_year = current_year - 1
     
-    # Thống kê đề tài theo đơn vị
-    detai_donvi = db.session.query(
+    # ========== THỐNG KÊ ĐỀ TÀI THEO ĐƠN VỊ ==========
+    query = db.session.query(
         DeTai.don_vi,
         func.count(DeTai.id).label('total')
     )
     if don_vi_filter:
-        detai_donvi = detai_donvi.filter(DeTai.don_vi == don_vi_filter)
+        query = query.filter(DeTai.don_vi == don_vi_filter)
     if nam_filter:
-        detai_donvi = detai_donvi.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
-    detai_donvi = detai_donvi.group_by(DeTai.don_vi).all()
+        query = query.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    don_vi_stats = [{'don_vi': dv, 'total': total} for dv, total in query.group_by(DeTai.don_vi).all()]
     
-    # Thống kê sáng kiến theo đơn vị
-    sangkien_donvi = db.session.query(
+    # ========== THỐNG KÊ SÁNG KIẾN THEO ĐƠN VỊ ==========
+    query = db.session.query(
         SangKien.don_vi,
         func.count(SangKien.id).label('total')
     )
     if don_vi_filter:
-        sangkien_donvi = sangkien_donvi.filter(SangKien.don_vi == don_vi_filter)
+        query = query.filter(SangKien.don_vi == don_vi_filter)
     if nam_filter:
-        sangkien_donvi = sangkien_donvi.filter(func.extract('year', SangKien.ngay_bat_dau) == int(nam_filter))
-    sangkien_donvi = sangkien_donvi.group_by(SangKien.don_vi).all()
+        query = query.filter(func.extract('year', SangKien.ngay_bat_dau) == int(nam_filter))
+    sangkien_stats = [{'don_vi': dv, 'total': total} for dv, total in query.group_by(SangKien.don_vi).all()]
     
-    # Thống kê tài liệu theo đơn vị
-    tailieu_donvi = db.session.query(
-        TaiLieu.don_vi,
-        func.count(TaiLieu.id).label('total')
-    )
-    if don_vi_filter:
-        tailieu_donvi = tailieu_donvi.filter(TaiLieu.don_vi == don_vi_filter)
-    if nam_filter:
-        tailieu_donvi = tailieu_donvi.filter(func.extract('year', TaiLieu.ngay_bat_dau) == int(nam_filter))
-    tailieu_donvi = tailieu_donvi.group_by(TaiLieu.don_vi).all()
-    
-    # Thống kê tài liệu theo loại
-    tailieu_loai = db.session.query(
+    # ========== THỐNG KÊ TÀI LIỆU THEO LOẠI ==========
+    query = db.session.query(
         TaiLieu.loai,
         func.count(TaiLieu.id).label('total')
     )
     if don_vi_filter:
-        tailieu_loai = tailieu_loai.filter(TaiLieu.don_vi == don_vi_filter)
+        query = query.filter(TaiLieu.don_vi == don_vi_filter)
     if nam_filter:
-        tailieu_loai = tailieu_loai.filter(func.extract('year', TaiLieu.ngay_bat_dau) == int(nam_filter))
-    tailieu_loai = tailieu_loai.group_by(TaiLieu.loai).all()
+        query = query.filter(func.extract('year', TaiLieu.ngay_bat_dau) == int(nam_filter))
+    tailieu_stats = [{'loai': loai, 'total': total} for loai, total in query.group_by(TaiLieu.loai).all()]
     
-    # Thống kê tiềm lực theo đơn vị
-    tiemluc_donvi = db.session.query(
+    # ========== THỐNG KÊ TIỀM LỰC THEO ĐƠN VỊ ==========
+    query = db.session.query(
         TiemLuc.don_vi,
         func.count(TiemLuc.id).label('total')
     )
     if don_vi_filter:
-        tiemluc_donvi = tiemluc_donvi.filter(TiemLuc.don_vi == don_vi_filter)
-    tiemluc_donvi = tiemluc_donvi.group_by(TiemLuc.don_vi).all()
+        query = query.filter(TiemLuc.don_vi == don_vi_filter)
+    tiemluc_stats = [{'don_vi': dv, 'total': total} for dv, total in query.group_by(TiemLuc.don_vi).all()]
     
-    # Thống kê trạng thái đề tài
-    detai_trangthai = db.session.query(
+    # ========== THỐNG KÊ TRẠNG THÁI ĐỀ TÀI ==========
+    query = db.session.query(
         DeTai.trang_thai,
         func.count(DeTai.id).label('total')
     )
     if don_vi_filter:
-        detai_trangthai = detai_trangthai.filter(DeTai.don_vi == don_vi_filter)
+        query = query.filter(DeTai.don_vi == don_vi_filter)
     if nam_filter:
-        detai_trangthai = detai_trangthai.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
-    detai_trangthai = detai_trangthai.group_by(DeTai.trang_thai).all()
+        query = query.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    detai_trangthai = [{'trang_thai': tt, 'total': total} for tt, total in query.group_by(DeTai.trang_thai).all()]
     
-    # Thống kê theo cá nhân (chủ nhiệm)
-    detai_canhan = []
-    sangkien_canhan = []
-    tailieu_canhan = []
+    # ========== THỐNG KÊ THEO THỜI GIAN (5 NĂM GẦN NHẤT) ==========
+    detai_by_year = []
+    sangkien_by_year = []
+    tailieu_by_year = []
     
-    if loai_filter == 'canhan':
-        # Top cá nhân có nhiều đề tài nhất
-        detai_canhan_query = db.session.query(
-            DeTai.chu_nhiem,
-            DeTai.don_vi,
-            func.count(DeTai.id).label('total')
-        )
+    for year in range(current_year - 4, current_year + 1):
+        # Đề tài
+        query = db.session.query(func.count(DeTai.id))
         if don_vi_filter:
-            detai_canhan_query = detai_canhan_query.filter(DeTai.don_vi == don_vi_filter)
-        if nam_filter:
-            detai_canhan_query = detai_canhan_query.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
-        detai_canhan = detai_canhan_query.group_by(DeTai.chu_nhiem, DeTai.don_vi).order_by(func.count(DeTai.id).desc()).limit(20).all()
+            query = query.filter(DeTai.don_vi == don_vi_filter)
+        query = query.filter(func.extract('year', DeTai.ngay_bat_dau) == year)
+        detai_count = query.scalar() or 0
+        detai_by_year.append({'year': year, 'count': detai_count})
         
-        # Top cá nhân có nhiều sáng kiến nhất
-        sangkien_canhan_query = db.session.query(
-            SangKien.chu_nhiem,
-            SangKien.don_vi,
-            func.count(SangKien.id).label('total')
-        )
+        # Sáng kiến
+        query = db.session.query(func.count(SangKien.id))
         if don_vi_filter:
-            sangkien_canhan_query = sangkien_canhan_query.filter(SangKien.don_vi == don_vi_filter)
-        if nam_filter:
-            sangkien_canhan_query = sangkien_canhan_query.filter(func.extract('year', SangKien.ngay_bat_dau) == int(nam_filter))
-        sangkien_canhan = sangkien_canhan_query.group_by(SangKien.chu_nhiem, SangKien.don_vi).order_by(func.count(SangKien.id).desc()).limit(20).all()
+            query = query.filter(SangKien.don_vi == don_vi_filter)
+        query = query.filter(func.extract('year', SangKien.ngay_bat_dau) == year)
+        sangkien_count = query.scalar() or 0
+        sangkien_by_year.append({'year': year, 'count': sangkien_count})
         
-        # Top cá nhân có nhiều tài liệu nhất
-        tailieu_canhan_query = db.session.query(
-            TaiLieu.tac_gia,
-            TaiLieu.don_vi,
-            func.count(TaiLieu.id).label('total')
+        # Tài liệu
+        query = db.session.query(func.count(TaiLieu.id))
+        if don_vi_filter:
+            query = query.filter(TaiLieu.don_vi == don_vi_filter)
+        query = query.filter(func.extract('year', TaiLieu.ngay_bat_dau) == year)
+        tailieu_count = query.scalar() or 0
+        tailieu_by_year.append({'year': year, 'count': tailieu_count})
+    
+    # ========== THỐNG KÊ THEO CẤP ĐỘ ==========
+    query = db.session.query(
+        DeTai.cap_do,
+        func.count(DeTai.id).label('total')
+    )
+    if don_vi_filter:
+        query = query.filter(DeTai.don_vi == don_vi_filter)
+    if nam_filter:
+        query = query.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    detai_by_capdo = [{'cap_do': cd or 'Chưa xác định', 'total': total} 
+                      for cd, total in query.group_by(DeTai.cap_do).all()]
+    
+    # ========== THỐNG KÊ HỌC VỊ/HỌC HÀM ==========
+    hocvi_stats = db.session.query(
+        TiemLuc.hoc_vi,
+        func.count(TiemLuc.id).label('total')
+    ).filter(TiemLuc.hoc_vi.isnot(None))
+    if don_vi_filter:
+        hocvi_stats = hocvi_stats.filter(TiemLuc.don_vi == don_vi_filter)
+    hocvi_stats = [{'hoc_vi': hv or 'Chưa có', 'total': total} 
+                   for hv, total in hocvi_stats.group_by(TiemLuc.hoc_vi).all()]
+    
+    hocham_stats = db.session.query(
+        TiemLuc.hoc_ham,
+        func.count(TiemLuc.id).label('total')
+    ).filter(TiemLuc.hoc_ham.isnot(None))
+    if don_vi_filter:
+        hocham_stats = hocham_stats.filter(TiemLuc.don_vi == don_vi_filter)
+    hocham_stats = [{'hoc_ham': hh or 'Chưa có', 'total': total} 
+                    for hh, total in hocham_stats.group_by(TiemLuc.hoc_ham).all()]
+    
+    # ========== MỚI: SO SÁNH NĂM HIỆN TẠI VỚI NĂM TRƯỚC ==========
+    # Đề tài năm hiện tại
+    detai_current = db.session.query(func.count(DeTai.id)).filter(
+        func.extract('year', DeTai.ngay_bat_dau) == current_year
+    )
+    if don_vi_filter:
+        detai_current = detai_current.filter(DeTai.don_vi == don_vi_filter)
+    detai_current_count = detai_current.scalar() or 0
+    
+    # Đề tài năm trước
+    detai_previous = db.session.query(func.count(DeTai.id)).filter(
+        func.extract('year', DeTai.ngay_bat_dau) == previous_year
+    )
+    if don_vi_filter:
+        detai_previous = detai_previous.filter(DeTai.don_vi == don_vi_filter)
+    detai_previous_count = detai_previous.scalar() or 0
+    
+    # Tính % tăng/giảm đề tài
+    detai_change_percent = 0
+    if detai_previous_count > 0:
+        detai_change_percent = ((detai_current_count - detai_previous_count) / detai_previous_count) * 100
+    
+    # Sáng kiến năm hiện tại
+    sangkien_current = db.session.query(func.count(SangKien.id)).filter(
+        func.extract('year', SangKien.ngay_bat_dau) == current_year
+    )
+    if don_vi_filter:
+        sangkien_current = sangkien_current.filter(SangKien.don_vi == don_vi_filter)
+    sangkien_current_count = sangkien_current.scalar() or 0
+    
+    # Sáng kiến năm trước
+    sangkien_previous = db.session.query(func.count(SangKien.id)).filter(
+        func.extract('year', SangKien.ngay_bat_dau) == previous_year
+    )
+    if don_vi_filter:
+        sangkien_previous = sangkien_previous.filter(SangKien.don_vi == don_vi_filter)
+    sangkien_previous_count = sangkien_previous.scalar() or 0
+    
+    # Tính % tăng/giảm sáng kiến
+    sangkien_change_percent = 0
+    if sangkien_previous_count > 0:
+        sangkien_change_percent = ((sangkien_current_count - sangkien_previous_count) / sangkien_previous_count) * 100
+    
+    # ========== MỚI: TOP 5 ĐƠN VỊ XUẤT SẮC ==========
+    # Top đề tài
+    top_detai = db.session.query(
+        DeTai.don_vi,
+        func.count(DeTai.id).label('total')
+    )
+    if nam_filter:
+        top_detai = top_detai.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    top_detai = top_detai.group_by(DeTai.don_vi).order_by(func.count(DeTai.id).desc()).limit(5).all()
+    top_detai_list = [{'don_vi': dv or 'Chưa xác định', 'total': total} for dv, total in top_detai]
+    
+    # Top sáng kiến
+    top_sangkien = db.session.query(
+        SangKien.don_vi,
+        func.count(SangKien.id).label('total')
+    )
+    if nam_filter:
+        top_sangkien = top_sangkien.filter(func.extract('year', SangKien.ngay_bat_dau) == int(nam_filter))
+    top_sangkien = top_sangkien.group_by(SangKien.don_vi).order_by(func.count(SangKien.id).desc()).limit(5).all()
+    top_sangkien_list = [{'don_vi': dv or 'Chưa xác định', 'total': total} for dv, total in top_sangkien]
+    
+    # ========== MỚI: THỐNG KÊ THEO QUÝ (NĂM HIỆN TẠI) ==========
+    detai_by_quarter = []
+    sangkien_by_quarter = []
+    
+    for quarter in range(1, 5):
+        # Tháng bắt đầu và kết thúc của quý
+        start_month = (quarter - 1) * 3 + 1
+        end_month = quarter * 3
+        
+        # Đề tài theo quý
+        query_detai = db.session.query(func.count(DeTai.id)).filter(
+            func.extract('year', DeTai.ngay_bat_dau) == current_year,
+            func.extract('month', DeTai.ngay_bat_dau) >= start_month,
+            func.extract('month', DeTai.ngay_bat_dau) <= end_month
         )
         if don_vi_filter:
-            tailieu_canhan_query = tailieu_canhan_query.filter(TaiLieu.don_vi == don_vi_filter)
-        if nam_filter:
-            tailieu_canhan_query = tailieu_canhan_query.filter(func.extract('year', TaiLieu.ngay_bat_dau) == int(nam_filter))
-        tailieu_canhan = tailieu_canhan_query.group_by(TaiLieu.tac_gia, TaiLieu.don_vi).order_by(func.count(TaiLieu.id).desc()).limit(20).all()
+            query_detai = query_detai.filter(DeTai.don_vi == don_vi_filter)
+        detai_count = query_detai.scalar() or 0
+        detai_by_quarter.append({'quarter': f'Q{quarter}', 'count': detai_count})
+        
+        # Sáng kiến theo quý
+        query_sangkien = db.session.query(func.count(SangKien.id)).filter(
+            func.extract('year', SangKien.ngay_bat_dau) == current_year,
+            func.extract('month', SangKien.ngay_bat_dau) >= start_month,
+            func.extract('month', SangKien.ngay_bat_dau) <= end_month
+        )
+        if don_vi_filter:
+            query_sangkien = query_sangkien.filter(SangKien.don_vi == don_vi_filter)
+        sangkien_count = query_sangkien.scalar() or 0
+        sangkien_by_quarter.append({'quarter': f'Q{quarter}', 'count': sangkien_count})
     
-    # Tổng số liệu
-    total_detai = detai_query.count()
-    total_sangkien = sangkien_query.count()
-    total_tailieu = tailieu_query.count()
-    total_tiemluc = tiemluc_query.count()
+    # ========== MỚI: THỐNG KÊ TỶ LỆ HOÀN THÀNH ==========
+    # Đề tài hoàn thành
+    detai_completed = db.session.query(func.count(DeTai.id)).filter(
+        DeTai.trang_thai == 'Hoàn thành'
+    )
+    if don_vi_filter:
+        detai_completed = detai_completed.filter(DeTai.don_vi == don_vi_filter)
+    if nam_filter:
+        detai_completed = detai_completed.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    detai_completed_count = detai_completed.scalar() or 0
+    
+    # Tổng đề tài
+    total_detai_query = db.session.query(func.count(DeTai.id))
+    if don_vi_filter:
+        total_detai_query = total_detai_query.filter(DeTai.don_vi == don_vi_filter)
+    if nam_filter:
+        total_detai_query = total_detai_query.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    total_detai_count = total_detai_query.scalar() or 1
+    
+    # Tỷ lệ hoàn thành
+    completion_rate = (detai_completed_count / total_detai_count * 100) if total_detai_count > 0 else 0
+    
+    # ========== TỔNG HỢP ==========
+    total_detai = sum(s['total'] for s in don_vi_stats)
+    total_sangkien = sum(s['total'] for s in sangkien_stats)
+    total_tailieu = sum(s['total'] for s in tailieu_stats)
+    total_tiemluc = sum(s['total'] for s in tiemluc_stats)
     
     return render_template('thongke.html',
-                         detai_donvi=detai_donvi,
-                         sangkien_donvi=sangkien_donvi,
-                         tailieu_donvi=tailieu_donvi,
-                         tailieu_loai=tailieu_loai,
-                         tiemluc_donvi=tiemluc_donvi,
+                         don_vi_stats=don_vi_stats,
+                         sangkien_stats=sangkien_stats,
+                         tailieu_stats=tailieu_stats,
+                         tiemluc_stats=tiemluc_stats,
                          detai_trangthai=detai_trangthai,
-                         detai_canhan=detai_canhan,
-                         sangkien_canhan=sangkien_canhan,
-                         tailieu_canhan=tailieu_canhan,
+                         detai_by_year=detai_by_year,
+                         sangkien_by_year=sangkien_by_year,
+                         tailieu_by_year=tailieu_by_year,
+                         detai_by_capdo=detai_by_capdo,
+                         hocvi_stats=hocvi_stats,
+                         hocham_stats=hocham_stats,
                          total_detai=total_detai,
                          total_sangkien=total_sangkien,
                          total_tailieu=total_tailieu,
                          total_tiemluc=total_tiemluc,
                          don_vi_list=DON_VI_LIST,
-                         don_vi_filter=don_vi_filter,
-                         nam_filter=nam_filter,
-                         loai_filter=loai_filter)
+                         # Thống kê mới
+                         detai_current_count=detai_current_count,
+                         detai_previous_count=detai_previous_count,
+                         detai_change_percent=detai_change_percent,
+                         sangkien_current_count=sangkien_current_count,
+                         sangkien_previous_count=sangkien_previous_count,
+                         sangkien_change_percent=sangkien_change_percent,
+                         top_detai_list=top_detai_list,
+                         top_sangkien_list=top_sangkien_list,
+                         detai_by_quarter=detai_by_quarter,
+                         sangkien_by_quarter=sangkien_by_quarter,
+                         completion_rate=completion_rate,
+                         current_year=current_year,
+                         previous_year=previous_year)
 
 @main_bp.route('/thongke/export-excel')
 @login_required
@@ -1580,3 +1964,26 @@ def timkiem():
                          results=results,
                          search_query=search_query,
                          search_type=search_type)
+
+# ==================== DOWNLOAD FILE ====================
+@main_bp.route('/download/<path:filepath>')
+@login_required
+def download_file(filepath):
+    """Download file đã upload"""
+    try:
+        # Đường dẫn đầy đủ đến file
+        full_path = os.path.join(filepath)
+        
+        # Kiểm tra file có tồn tại không
+        if not os.path.exists(full_path):
+            flash('File không tồn tại!', 'danger')
+            return redirect(request.referrer or url_for('main.dashboard'))
+        
+        # Lấy tên file gốc
+        filename = os.path.basename(full_path)
+        
+        # Gửi file
+        return send_file(full_path, as_attachment=True, download_name=filename)
+    except Exception as e:
+        flash(f'Lỗi khi tải file: {str(e)}', 'danger')
+        return redirect(request.referrer or url_for('main.dashboard'))

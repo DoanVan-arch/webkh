@@ -7,7 +7,7 @@
     <h1 style="color: var(--primary-color);">
         <i class="fas fa-book"></i> Quản lý Giáo trình & Tài liệu
     </h1>
-    <a href="{{ url_for('main.giaotrinh_add') }}" class="btn btn-primary">
+    <a href="{{ url_for('main.tailieu_add') }}" class="btn btn-primary">
         <i class="fas fa-plus"></i> Thêm tài liệu mới
     </a>
 </div>
@@ -59,10 +59,10 @@
                     <td>{{ gt.nam_xuat_ban or 'N/A' }}</td>
                     <td style="white-space: nowrap;">
                         {% if current_user.role == 'admin' or current_user.don_vi == gt.don_vi %}
-                        <a href="{{ url_for('main.giaotrinh_edit', id=gt.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;" title="Sửa">
+                        <a href="{{ url_for('main.tailieu_edit', id=gt.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;" title="Sửa">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="{{ url_for('main.giaotrinh_delete', id=gt.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="return confirm('Bạn có chắc chắn muốn xóa?')" title="Xóa">
+                        <a href="{{ url_for('main.tailieu_delete', id=gt.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="return confirm('Bạn có chắc chắn muốn xóa?')" title="Xóa">
                             <i class="fas fa-trash"></i>
                         </a>
                         {% else %}
@@ -80,7 +80,7 @@
         {% if pagination.pages > 1 %}
         <div class="pagination">
             {% if pagination.has_prev %}
-            <a href="{{ url_for('main.giaotrinh_list', page=pagination.prev_num, search=search) }}">« Trước</a>
+            <a href="{{ url_for('main.tailieu_list', page=pagination.prev_num, search=search) }}">« Trước</a>
             {% endif %}
 
             {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
@@ -88,7 +88,7 @@
                     {% if page_num == pagination.page %}
                     <span class="active">{{ page_num }}</span>
                     {% else %}
-                    <a href="{{ url_for('main.giaotrinh_list', page=page_num, search=search) }}">{{ page_num }}</a>
+                    <a href="{{ url_for('main.tailieu_list', page=page_num, search=search) }}">{{ page_num }}</a>
                     {% endif %}
                 {% else %}
                 <span>...</span>
@@ -96,7 +96,7 @@
             {% endfor %}
 
             {% if pagination.has_next %}
-            <a href="{{ url_for('main.giaotrinh_list', page=pagination.next_num, search=search) }}">Sau »</a>
+            <a href="{{ url_for('main.tailieu_list', page=pagination.next_num, search=search) }}">Sau »</a>
             {% endif %}
         </div>
         {% endif %}
@@ -105,7 +105,118 @@
         {% endif %}
     </div>
 </div>
+<!-- Thống kê theo đơn vị -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <i class="fas fa-chart-pie"></i> Thống kê tài liệu theo đơn vị
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5><i class="fas fa-building"></i> Phân bố theo đơn vị</h5>
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover table-striped">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th style="width: 60px;">STT</th>
+                                <th>Đơn vị</th>
+                                <th style="width: 120px; text-align: center;">Số lượng</th>
+                                <th style="width: 150px;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span>Tỷ lệ</span>
+                                        <i class="fas fa-percentage" style="font-size: 0.9rem;"></i>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in donvi_stats %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>
+                                    <i class="fas fa-university" style="color: #667eea; margin-right: 0.5rem;"></i>
+                                    <strong>{{ stat.don_vi }}</strong>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        {{ stat.total }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% set percent = (stat.total / total_tailieu * 100) if total_tailieu > 0 else 0 %}
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="flex: 1; background: #e9ecef; height: 25px; border-radius: 12px; overflow: hidden;">
+                                            <div style="width: {{ percent }}%; background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; 
+                                                       display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: bold; transition: width 0.3s;">
+                                                {% if percent >= 15 %}{{ "%.1f"|format(percent) }}%{% endif %}
+                                            </div>
+                                        </div>
+                                        {% if percent < 15 %}
+                                        <span style="font-size: 0.9rem; font-weight: bold; color: #667eea; min-width: 50px;">
+                                            {{ "%.1f"|format(percent) }}%
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background-color: #f0f0f0; font-weight: bold; border-top: 2px solid #667eea;">
+                                <td colspan="2" style="text-align: right; padding-right: 1rem;">
+                                    <i class="fas fa-calculator"></i> TỔNG CỘNG
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-success" style="font-size: 1.1rem; padding: 0.6rem 1.2rem;">
+                                        {{ total_tailieu }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-info" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        100%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <h5><i class="fas fa-layer-group"></i> Phân loại tài liệu</h5>
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>Loại</th>
+                                <th style="width: 100px; text-align: center;">Số lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in loai_stats %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-tag" style="color: #f5576c; margin-right: 0.5rem;"></i>
+                                    <strong>{{ stat.loai }}</strong>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.4rem 0.9rem;">
+                                        {{ stat.total }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<style>
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+}
+</style>
 <div class="alert alert-info" style="margin-top: 1rem;">
     <i class="fas fa-info-circle"></i> <strong>Ghi chú:</strong> 
     <ul style="margin: 0.5rem 0 0 1.5rem;">
@@ -115,3 +226,4 @@
     </ul>
 </div>
 {% endblock %}
+
