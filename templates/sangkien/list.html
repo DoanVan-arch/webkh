@@ -47,7 +47,7 @@
             </thead>
             <tbody>
                 {% for sangkien in pagination.items %}
-                <tr class="hoverable-row" {% if sangkien.mo_ta %}title="{{ sangkien.mo_ta }}"{% endif %}>
+                <tr class="hoverable-row" {% if sangkien.mo_ta %}title="{{ sangkien.mo_ta }}"{% endif %} ondblclick="window.location='{{ url_for('main.sangkien_detail', id=sangkien.id) }}'">
                     <td><strong>{{ sangkien.ma_sang_kien }}</strong></td>
                     <td>{{ sangkien.ten_sang_kien }}</td>
                     <td>{{ sangkien.chu_nhiem }}</td>

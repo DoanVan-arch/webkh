@@ -15,6 +15,7 @@ from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import io
+from utils.file_reader import search_in_file
 
 main_bp = Blueprint('main', 'main')
 
@@ -397,6 +398,21 @@ def detai_delete(id):
     flash('Xóa đề tài thành công!', 'success')
     return redirect(url_for('main.detai_list'))
 
+@main_bp.route('/tailieu/detail/<int:id>')
+@login_required
+def tailieu_detail(id):
+    tailieu = TaiLieu.query.get_or_404(id)
+    
+    # Lấy danh sách thành viên ban và hội đồng
+    ban_members = BanTaiLieu.query.filter_by(tai_lieu_id=id).all()
+    hoi_dong_de_cuong_members = HoiDongDeCuongTaiLieu.query.filter_by(tai_lieu_id=id).all()
+    hoi_dong_nghiem_thu_members = HoiDongNghiemThuTaiLieu.query.filter_by(tai_lieu_id=id).all()
+    
+    return render_template('tailieu/detail.html', 
+                         tailieu=tailieu,
+                         ban_members=ban_members,
+                         hoi_dong_de_cuong_members=hoi_dong_de_cuong_members,
+                         hoi_dong_nghiem_thu_members=hoi_dong_nghiem_thu_members)
 # ==================== QUẢN LÝ TÀI LIỆU ====================
 @main_bp.route('/tailieu')
 @login_required
@@ -488,67 +504,43 @@ def giaotrinh_list():
 @main_bp.route('/tailieu/add', methods=['GET', 'POST'])
 @login_required
 def tailieu_add():
-    """Thêm tài liệu mới"""
     if request.method == 'POST':
-        don_vi = current_user.don_vi if current_user.role != 'admin' else request.form.get('don_vi')
+        # Tạo mã tài liệu tự động nếu không nhập
+        ma_tai_lieu = request.form.get('ma_tai_lieu')
+        if not ma_tai_lieu:
+            year = datetime.now().year
+            count = TaiLieu.query.filter(TaiLieu.ma_tai_lieu.like(f'TL{year}%')).count()
+            ma_tai_lieu = f'TL{year}{count+1:04d}'
         
         tailieu = TaiLieu(
-            ma_tai_lieu=request.form.get('ma_tai_lieu'),
+            ma_tai_lieu=ma_tai_lieu,
             ten_tai_lieu=request.form.get('ten_tai_lieu'),
             loai=request.form.get('loai'),
-            tac_gia=request.form.get('tac_gia'),  # Textarea nhiều dòng
-            nha_xuat_ban=request.form.get('nha_xuat_ban'),
-            nam_xuat_ban=int(request.form.get('nam_xuat_ban', 0)) if request.form.get('nam_xuat_ban') else None,
+            tac_gia=request.form.get('tac_gia', '').strip(),
             mon_hoc=request.form.get('mon_hoc'),
-            mo_ta=request.form.get('mo_ta'),
             linh_vuc=request.form.get('linh_vuc'),
-            don_vi=don_vi,
+            nha_xuat_ban=request.form.get('nha_xuat_ban'),
+            nam_xuat_ban=request.form.get('nam_xuat_ban') or None,
             trang_thai=request.form.get('trang_thai', 'Đang thực hiện'),
-            created_by=current_user.id
+            ket_qua=request.form.get('ket_qua'),
+            mo_ta=request.form.get('mo_ta'),
+            don_vi=current_user.don_vi
         )
         
-        # Xử lý ngày tháng
+        # Ngày tháng
         ngay_bat_dau = request.form.get('ngay_bat_dau')
-        ngay_ket_thuc = request.form.get('ngay_ket_thuc')
         if ngay_bat_dau:
             tailieu.ngay_bat_dau = datetime.strptime(ngay_bat_dau, '%Y-%m-%d').date()
+        
+        ngay_ket_thuc = request.form.get('ngay_ket_thuc')
         if ngay_ket_thuc:
             tailieu.ngay_ket_thuc = datetime.strptime(ngay_ket_thuc, '%Y-%m-%d').date()
         
+        # Thêm vào DB trước để có ID
         db.session.add(tailieu)
-        db.session.flush()  # Để lấy ID
+        db.session.flush()  # Lấy ID nhưng chưa commit
         
-        # Tạo thư mục riêng cho tài liệu: tailieu_<id>_<ma_tai_lieu>
-        folder_name = f"tailieu_{tailieu.id}_{tailieu.ma_tai_lieu}"
-        
-        # Xử lý upload file tài liệu (PDF hoặc Word)
-        if 'file_tai_lieu' in request.files:
-            file = request.files['file_tai_lieu']
-            if file and file.filename:
-                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name,category='tailieu')
-        
-        # Xử lý upload các file
-        if 'bien_ban_ban' in request.files:
-            file = request.files['bien_ban_ban']
-            if file and file.filename:
-                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
-        
-        if 'bien_ban_de_cuong' in request.files:
-            file = request.files['bien_ban_de_cuong']
-            if file and file.filename:
-                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
-        
-        if 'bien_ban_nghiem_thu' in request.files:
-            file = request.files['bien_ban_nghiem_thu']
-            if file and file.filename:
-                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
-        
-        if 'file_sau_sua' in request.files:
-            file = request.files['file_sau_sua']
-            if file and file.filename:
-                tailieu.file_sau_sua = save_uploaded_file(file, folder_name,category='tailieu')
-        
-        # Xử lý thêm thành viên Ban tài liệu
+        # ======== THÊM BAN TÀI LIỆU ========
         ban_tai_lieu_text = request.form.get('ban_tai_lieu', '').strip()
         if ban_tai_lieu_text:
             for line in ban_tai_lieu_text.split('\n'):
@@ -556,15 +548,16 @@ def tailieu_add():
                 if line and '-' in line:
                     parts = line.split('-', 1)
                     vai_tro = parts[0].strip()
-                    ho_ten = parts[1].strip()
-                    ban_member = BanTaiLieu(
-                        tai_lieu_id=tailieu.id,
-                        vai_tro=vai_tro,
-                        ho_ten=ho_ten
-                    )
-                    db.session.add(ban_member)
+                    ho_ten = parts[1].strip() if len(parts) > 1 else ''
+                    if ho_ten:
+                        ban_member = BanTaiLieu(
+                            tai_lieu_id=tailieu.id,
+                            ho_ten=ho_ten,
+                            vai_tro=vai_tro
+                        )
+                        db.session.add(ban_member)
         
-        # Xử lý thêm thành viên Hội đồng duyệt đề cương
+        # ======== THÊM HỘI ĐỒNG DUYỆT ĐỀ CƯƠNG ========
         hoi_dong_de_cuong_text = request.form.get('hoi_dong_de_cuong', '').strip()
         if hoi_dong_de_cuong_text:
             for line in hoi_dong_de_cuong_text.split('\n'):
@@ -572,15 +565,16 @@ def tailieu_add():
                 if line and '-' in line:
                     parts = line.split('-', 1)
                     vai_tro = parts[0].strip()
-                    ho_ten = parts[1].strip()
-                    hd_member = HoiDongDeCuongTaiLieu(
-                        tai_lieu_id=tailieu.id,
-                        vai_tro=vai_tro,
-                        ho_ten=ho_ten
-                    )
-                    db.session.add(hd_member)
+                    ho_ten = parts[1].strip() if len(parts) > 1 else ''
+                    if ho_ten:
+                        member = HoiDongDeCuongTaiLieu(
+                            tai_lieu_id=tailieu.id,
+                            ho_ten=ho_ten,
+                            vai_tro=vai_tro
+                        )
+                        db.session.add(member)
         
-        # Xử lý thêm thành viên Hội đồng nghiệm thu
+        # ======== THÊM HỘI ĐỒNG NGHIỆM THU ========
         hoi_dong_nghiem_thu_text = request.form.get('hoi_dong_nghiem_thu', '').strip()
         if hoi_dong_nghiem_thu_text:
             for line in hoi_dong_nghiem_thu_text.split('\n'):
@@ -588,20 +582,47 @@ def tailieu_add():
                 if line and '-' in line:
                     parts = line.split('-', 1)
                     vai_tro = parts[0].strip()
-                    ho_ten = parts[1].strip()
-                    hd_member = HoiDongNghiemThuTaiLieu(
-                        tai_lieu_id=tailieu.id,
-                        vai_tro=vai_tro,
-                        ho_ten=ho_ten
-                    )
-                    db.session.add(hd_member)
+                    ho_ten = parts[1].strip() if len(parts) > 1 else ''
+                    if ho_ten:
+                        member = HoiDongNghiemThuTaiLieu(
+                            tai_lieu_id=tailieu.id,
+                            ho_ten=ho_ten,
+                            vai_tro=vai_tro
+                        )
+                        db.session.add(member)
         
-        db.session.commit()
+        # Upload files
+        folder_name = f"tailieu_{ma_tai_lieu}"
         
-        flash('Thêm tài liệu thành công!', 'success')
-        return redirect(url_for('main.tailieu_list'))
+        if 'file_tai_lieu' in request.files:
+            file = request.files['file_tai_lieu']
+            if file and file.filename:
+                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name, category='tailieu')
+        
+        if 'bien_ban_ban' in request.files:
+            file = request.files['bien_ban_ban']
+            if file and file.filename:
+                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name, category='bien_ban_ban')
+        
+        if 'bien_ban_de_cuong' in request.files:
+            file = request.files['bien_ban_de_cuong']
+            if file and file.filename:
+                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name, category='bien_ban_de_cuong')
+        
+        if 'bien_ban_nghiem_thu' in request.files:
+            file = request.files['bien_ban_nghiem_thu']
+            if file and file.filename:
+                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name, category='bien_ban_nghiem_thu')
+        
+        try:
+            db.session.commit()
+            flash('Thêm tài liệu thành công!', 'success')
+            return redirect(url_for('main.tailieu_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi thêm tài liệu: {str(e)}', 'danger')
     
-    return render_template('tailieu/add.html', don_vi_list=DON_VI_LIST, loai_list=LOAI_TAI_LIEU)
+    return render_template('tailieu/add.html')
 
 # Route tương thích
 @main_bp.route('/giaotrinh/add', methods=['GET', 'POST'])
@@ -615,67 +636,37 @@ def giaotrinh_add():
 @main_bp.route('/tailieu/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def tailieu_edit(id):
-    """Sửa tài liệu"""
     tailieu = TaiLieu.query.get_or_404(id)
     
-    if current_user.role != 'admin' and tailieu.don_vi != current_user.don_vi:
-        flash('Bạn không có quyền chỉnh sửa tài liệu của đơn vị khác!', 'danger')
+    # Kiểm tra quyền
+    if current_user.role != 'admin' and current_user.don_vi != tailieu.don_vi:
+        flash('Bạn không có quyền chỉnh sửa tài liệu này!', 'danger')
         return redirect(url_for('main.tailieu_list'))
     
     if request.method == 'POST':
+        # Cập nhật thông tin cơ bản
         tailieu.ma_tai_lieu = request.form.get('ma_tai_lieu')
         tailieu.ten_tai_lieu = request.form.get('ten_tai_lieu')
         tailieu.loai = request.form.get('loai')
-        tailieu.tac_gia = request.form.get('tac_gia')  # Đổi từ chu_nhiem sang tac_gia
-        tailieu.nha_xuat_ban = request.form.get('nha_xuat_ban')
-        tailieu.nam_xuat_ban = int(request.form.get('nam_xuat_ban', 0)) if request.form.get('nam_xuat_ban') else None
+        tailieu.tac_gia = request.form.get('tac_gia', '').strip()
         tailieu.mon_hoc = request.form.get('mon_hoc')
-        tailieu.mo_ta = request.form.get('mo_ta')
         tailieu.linh_vuc = request.form.get('linh_vuc')
+        tailieu.nha_xuat_ban = request.form.get('nha_xuat_ban')
+        tailieu.nam_xuat_ban = request.form.get('nam_xuat_ban') or None
         tailieu.trang_thai = request.form.get('trang_thai')
         tailieu.ket_qua = request.form.get('ket_qua')
+        tailieu.mo_ta = request.form.get('mo_ta')
         
-        if current_user.role == 'admin':
-            tailieu.don_vi = request.form.get('don_vi')
-        
+        # Ngày tháng
         ngay_bat_dau = request.form.get('ngay_bat_dau')
-        ngay_ket_thuc = request.form.get('ngay_ket_thuc')
         if ngay_bat_dau:
             tailieu.ngay_bat_dau = datetime.strptime(ngay_bat_dau, '%Y-%m-%d').date()
+        
+        ngay_ket_thuc = request.form.get('ngay_ket_thuc')
         if ngay_ket_thuc:
             tailieu.ngay_ket_thuc = datetime.strptime(ngay_ket_thuc, '%Y-%m-%d').date()
         
-        # Tạo thư mục riêng cho tài liệu
-        folder_name = f"tailieu_{tailieu.id}_{tailieu.ma_tai_lieu}"
-        
-        # Xử lý upload file tài liệu (PDF hoặc Word)
-        if 'file_tai_lieu' in request.files:
-            file = request.files['file_tai_lieu']
-            if file and file.filename:
-                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name,category='tailieu')
-        
-        # Xử lý upload các file (chỉ upload nếu có file mới)
-        if 'bien_ban_ban' in request.files:
-            file = request.files['bien_ban_ban']
-            if file and file.filename:
-                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name,category='bien_ban_ban')
-        
-        if 'bien_ban_de_cuong' in request.files:
-            file = request.files['bien_ban_de_cuong']
-            if file and file.filename:
-                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name,category='bien_ban_de_cuong')
-        
-        if 'bien_ban_nghiem_thu' in request.files:
-            file = request.files['bien_ban_nghiem_thu']
-            if file and file.filename:
-                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name,category='bien_ban_nghiem_thu')
-        
-        if 'file_sau_sua' in request.files:
-            file = request.files['file_sau_sua']
-            if file and file.filename:
-                tailieu.file_sau_sua = save_uploaded_file(file, folder_name,category='tailieu')
-        
-        # ======== CẬP NHẬT THÀNH VIÊN BAN TÀI LIỆU ========
+        # ======== CẬP NHẬT BAN TÀI LIỆU ========
         # Xóa toàn bộ thành viên cũ
         BanTaiLieu.query.filter_by(tai_lieu_id=tailieu.id).delete()
         
@@ -687,19 +678,18 @@ def tailieu_edit(id):
                 if line and '-' in line:
                     parts = line.split('-', 1)
                     vai_tro = parts[0].strip()
-                    ho_ten = parts[1].strip()
-                    ban_member = BanTaiLieu(
-                        tai_lieu_id=tailieu.id,
-                        vai_tro=vai_tro,
-                        ho_ten=ho_ten
-                    )
-                    db.session.add(ban_member)
+                    ho_ten = parts[1].strip() if len(parts) > 1 else ''
+                    if ho_ten:
+                        ban_member = BanTaiLieu(
+                            tai_lieu_id=tailieu.id,
+                            ho_ten=ho_ten,
+                            vai_tro=vai_tro
+                        )
+                        db.session.add(ban_member)
         
         # ======== CẬP NHẬT HỘI ĐỒNG DUYỆT ĐỀ CƯƠNG ========
-        # Xóa toàn bộ thành viên cũ
         HoiDongDeCuongTaiLieu.query.filter_by(tai_lieu_id=tailieu.id).delete()
         
-        # Thêm lại từ form
         hoi_dong_de_cuong_text = request.form.get('hoi_dong_de_cuong', '').strip()
         if hoi_dong_de_cuong_text:
             for line in hoi_dong_de_cuong_text.split('\n'):
@@ -707,19 +697,18 @@ def tailieu_edit(id):
                 if line and '-' in line:
                     parts = line.split('-', 1)
                     vai_tro = parts[0].strip()
-                    ho_ten = parts[1].strip()
-                    hd_member = HoiDongDeCuongTaiLieu(
-                        tai_lieu_id=tailieu.id,
-                        vai_tro=vai_tro,
-                        ho_ten=ho_ten
-                    )
-                    db.session.add(hd_member)
+                    ho_ten = parts[1].strip() if len(parts) > 1 else ''
+                    if ho_ten:
+                        member = HoiDongDeCuongTaiLieu(
+                            tai_lieu_id=tailieu.id,
+                            ho_ten=ho_ten,
+                            vai_tro=vai_tro
+                        )
+                        db.session.add(member)
         
         # ======== CẬP NHẬT HỘI ĐỒNG NGHIỆM THU ========
-        # Xóa toàn bộ thành viên cũ
         HoiDongNghiemThuTaiLieu.query.filter_by(tai_lieu_id=tailieu.id).delete()
         
-        # Thêm lại từ form
         hoi_dong_nghiem_thu_text = request.form.get('hoi_dong_nghiem_thu', '').strip()
         if hoi_dong_nghiem_thu_text:
             for line in hoi_dong_nghiem_thu_text.split('\n'):
@@ -727,20 +716,50 @@ def tailieu_edit(id):
                 if line and '-' in line:
                     parts = line.split('-', 1)
                     vai_tro = parts[0].strip()
-                    ho_ten = parts[1].strip()
-                    hd_member = HoiDongNghiemThuTaiLieu(
-                        tai_lieu_id=tailieu.id,
-                        vai_tro=vai_tro,
-                        ho_ten=ho_ten
-                    )
-                    db.session.add(hd_member)
+                    ho_ten = parts[1].strip() if len(parts) > 1 else ''
+                    if ho_ten:
+                        member = HoiDongNghiemThuTaiLieu(
+                            tai_lieu_id=tailieu.id,
+                            ho_ten=ho_ten,
+                            vai_tro=vai_tro
+                        )
+                        db.session.add(member)
         
-        db.session.commit()
+        # ======== XỬ LÝ UPLOAD FILE ========
+        folder_name = f"tailieu_{tailieu.ma_tai_lieu}"
         
-        flash('Cập nhật tài liệu thành công!', 'success')
-        return redirect(url_for('main.tailieu_list'))
+        # File tài liệu chính
+        if 'file_tai_lieu' in request.files:
+            file = request.files['file_tai_lieu']
+            if file and file.filename:
+                tailieu.file_tai_lieu = save_uploaded_file(file, folder_name, category='tailieu')
+        
+        # Các biên bản
+        if 'bien_ban_ban' in request.files:
+            file = request.files['bien_ban_ban']
+            if file and file.filename:
+                tailieu.bien_ban_ban = save_uploaded_file(file, folder_name, category='bien_ban_ban')
+        
+        if 'bien_ban_de_cuong' in request.files:
+            file = request.files['bien_ban_de_cuong']
+            if file and file.filename:
+                tailieu.bien_ban_de_cuong = save_uploaded_file(file, folder_name, category='bien_ban_de_cuong')
+        
+        if 'bien_ban_nghiem_thu' in request.files:
+            file = request.files['bien_ban_nghiem_thu']
+            if file and file.filename:
+                tailieu.bien_ban_nghiem_thu = save_uploaded_file(file, folder_name, category='bien_ban_nghiem_thu')
+        
+        try:
+            db.session.commit()
+            flash('Cập nhật tài liệu thành công!', 'success')
+            return redirect(url_for('main.tailieu_detail', id=tailieu.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi cập nhật: {str(e)}', 'danger')
     
-    return render_template('tailieu/edit.html', tailieu=tailieu, don_vi_list=DON_VI_LIST, loai_list=LOAI_TAI_LIEU)
+    return render_template('tailieu/edit.html', tailieu=tailieu)
+
 
 # Route tương thích
 @main_bp.route('/giaotrinh/edit/<int:id>', methods=['GET', 'POST'])
@@ -1889,81 +1908,7 @@ def thongke_export_word():
         download_name=filename
     )
 
-# ==================== TÌM KIẾM ====================
-@main_bp.route('/timkiem', methods=['GET', 'POST'])
-@login_required
-def timkiem():
-    """Trang tìm kiếm tổng hợp"""
-    results = {
-        'detai': [],
-        'sangkien': [],
-        'tailieu': [],
-        'tiemluc': []
-    }
-    search_query = ''
-    search_type = 'all'
-    
-    if request.method == 'GET' and request.args.get('q'):
-        search_query = request.args.get('q', '').strip()
-        search_type = request.args.get('type', 'all')
-        
-        if search_query:
-            # Tìm kiếm đề tài
-            if search_type in ['all', 'detai']:
-                results['detai'] = DeTai.query.filter(
-                    db.or_(
-                        DeTai.ten_de_tai.contains(search_query),
-                        DeTai.ma_de_tai.contains(search_query),
-                        DeTai.chu_nhiem.contains(search_query),
-                        DeTai.mo_ta.contains(search_query),
-                     #   DeTai.ban_thanh_vien.contains(search_query),
-                        DeTai.linh_vuc.contains(search_query),
-                        DeTai.don_vi.contains(search_query),
-                     #   DeTai.hoi_dong_nghiem_thu.contains(search_query)
-                    )
-                ).limit(20).all()
-            
-            # Tìm kiếm sáng kiến
-            if search_type in ['all', 'sangkien']:
-                results['sangkien'] = SangKien.query.filter(
-                    db.or_(
-                        SangKien.ten_sang_kien.contains(search_query),
-                        SangKien.ma_sang_kien.contains(search_query),
-                        SangKien.chu_nhiem.contains(search_query),
-                        SangKien.mo_ta.contains(search_query),
-                       # SangKien.ban_thanh_vien.contains(search_query),
-                        SangKien.linh_vuc.contains(search_query),
-                        SangKien.don_vi.contains(search_query),
-                      #  SangKien.hoi_dong_nghiem_thu.contains(search_query)
-                    )
-                ).limit(20).all()
-            
-            # Tìm kiếm tài liệu
-            if search_type in ['all', 'tailieu']:
-                results['tailieu'] = TaiLieu.query.filter(
-                    db.or_(
-                        TaiLieu.ten_tai_lieu.contains(search_query),
-                        TaiLieu.ma_tai_lieu.contains(search_query),
-                        TaiLieu.tac_gia.contains(search_query),
-                        TaiLieu.mo_ta.contains(search_query)
-                    )
-                ).limit(20).all()
-            
-            # Tìm kiếm tiềm lực
-            if search_type in ['all', 'tiemluc']:
-                results['tiemluc'] = TiemLuc.query.filter(
-                    db.or_(
-                        TiemLuc.ho_ten.contains(search_query),
-                        TiemLuc.ma_can_bo.contains(search_query),
-                        TiemLuc.chuyen_mon.contains(search_query),
-                        TiemLuc.don_vi.contains(search_query)
-                    )
-                ).limit(20).all()
-    
-    return render_template('timkiem.html',
-                         results=results,
-                         search_query=search_query,
-                         search_type=search_type)
+
 
 # ==================== DOWNLOAD FILE ====================
 @main_bp.route('/download/<path:filepath>')
@@ -1987,3 +1932,200 @@ def download_file(filepath):
     except Exception as e:
         flash(f'Lỗi khi tải file: {str(e)}', 'danger')
         return redirect(request.referrer or url_for('main.dashboard'))
+# === DETAIL ROUTES ===
+
+@main_bp.route('/detai/detail/<int:id>')
+@login_required
+def detai_detail(id):
+    detai = DeTai.query.get_or_404(id)
+    hoi_dong_members = HoiDongNghiemThuDeTai.query.filter_by(de_tai_id=id).all()
+    return render_template('detai/detail.html', 
+                         detai=detai,
+                         hoi_dong_members=hoi_dong_members)
+
+
+@main_bp.route('/sangkien/detail/<int:id>')
+@login_required
+def sangkien_detail(id):
+    sangkien = SangKien.query.get_or_404(id)
+    return render_template('sangkien/detail.html', sangkien=sangkien)
+
+
+@main_bp.route('/tiemluc/detail/<int:id>')
+@login_required
+def tiemluc_detail(id):
+    tiemluc = TiemLuc.query.get_or_404(id)
+    
+    # Lấy danh sách công trình nghiên cứu của cán bộ này
+    # detai_list = DeTai.query.filter(
+    #     (DeTai.chu_nhiem.like(f'%{tiemluc.ho_ten}%')) | 
+    #     (DeTai.ban_thanh_vien.like(f'%{tiemluc.ho_ten}%'))
+    # ).all()
+    
+    # sangkien_list = SangKien.query.filter(
+    #     (SangKien.chu_nhiem.like(f'%{tiemluc.ho_ten}%')) | 
+    #     (SangKien.ban_thanh_vien.like(f'%{tiemluc.ho_ten}%'))
+    # ).all()
+    
+    # tailieu_list = TaiLieu.query.filter(
+    #     TaiLieu.tac_gia.like(f'%{tiemluc.ho_ten}%')
+    # ).all()
+    
+    return render_template('tiemluc/detail.html', 
+                         tiemluc=tiemluc,
+                         detai_list=detai_list,
+                         sangkien_list=sangkien_list,
+                         tailieu_list=tailieu_list)
+
+@main_bp.route('/timkiem', methods=['GET'])
+@login_required
+def timkiem():
+    search_query = request.args.get('q', '').strip()
+    search_type = request.args.get('type', 'all')
+    search_in_files = request.args.get('search_files', '0') == '1'  # Tìm trong file
+    
+    results = {
+        'detai': [],
+        'sangkien': [],
+        'tailieu': [],
+        'tiemluc': [],
+        'file_matches': []  # Kết quả tìm trong file
+    }
+    
+    if search_query:
+        # Tìm kiếm thông thường trong database
+        if search_type in ['all', 'detai']:
+            results['detai'] = DeTai.query.filter(
+                db.or_(
+                    DeTai.ma_de_tai.ilike(f'%{search_query}%'),
+                    DeTai.ten_de_tai.ilike(f'%{search_query}%'),
+                    DeTai.chu_nhiem.ilike(f'%{search_query}%'),
+               #     DeTai.ban_thanh_vien.ilike(f'%{search_query}%'),
+                    DeTai.mo_ta.ilike(f'%{search_query}%'),
+                    DeTai.don_vi.ilike(f'%{search_query}%')
+                )
+            ).all()
+        
+        if search_type in ['all', 'sangkien']:
+            results['sangkien'] = SangKien.query.filter(
+                db.or_(
+                    SangKien.ma_sang_kien.ilike(f'%{search_query}%'),
+                    SangKien.ten_sang_kien.ilike(f'%{search_query}%'),
+                    SangKien.chu_nhiem.ilike(f'%{search_query}%'),
+                #   SangKien.ban_thanh_vien.ilike(f'%{search_query}%'),
+                    SangKien.mo_ta.ilike(f'%{search_query}%'),
+                    SangKien.don_vi.ilike(f'%{search_query}%')
+                )
+            ).all()
+        
+        if search_type in ['all', 'tailieu']:
+            results['tailieu'] = TaiLieu.query.filter(
+                db.or_(
+                    TaiLieu.ma_tai_lieu.ilike(f'%{search_query}%'),
+                    TaiLieu.ten_tai_lieu.ilike(f'%{search_query}%'),
+                    TaiLieu.tac_gia.ilike(f'%{search_query}%'),
+                    TaiLieu.mo_ta.ilike(f'%{search_query}%'),
+                    TaiLieu.don_vi.ilike(f'%{search_query}%')
+                )
+            ).all()
+        
+        if search_type in ['all', 'tiemluc']:
+            results['tiemluc'] = TiemLuc.query.filter(
+                db.or_(
+                    TiemLuc.ma_can_bo.ilike(f'%{search_query}%'),
+                    TiemLuc.ho_ten.ilike(f'%{search_query}%'),
+                    TiemLuc.don_vi.ilike(f'%{search_query}%'),
+                    TiemLuc.chuyen_mon.ilike(f'%{search_query}%'),
+                    TiemLuc.kinh_nghiem.ilike(f'%{search_query}%')
+                )
+            ).all()
+        
+        # ============= TÌM KIẾM TRONG FILE =============
+        if search_in_files:
+            upload_folder = os.path.join('static', 'uploads')
+            
+            # Tìm trong file đề tài
+            if search_type in ['all', 'detai']:
+                for detai in DeTai.query.all():
+                    files_to_check = []
+                    if detai.file_sau_sua:
+                        files_to_check.append(('Đề cương', detai.file_sau_sua))
+                    if detai.bien_ban_de_cuong:
+                        files_to_check.append(('Biên bản họp', detai.bien_ban_de_cuong))
+                    if detai.bien_ban_nghiem_thu:
+                        files_to_check.append(('Nghiệm thu', detai.bien_ban_nghiem_thu))
+                    
+                    for file_type, file_path in files_to_check:
+                        full_path = os.path.join(upload_folder, file_path)
+                        found, snippet = search_in_file(full_path, search_query)
+                        if found:
+                            results['file_matches'].append({
+                                'type': 'detai',
+                                'item': detai,
+                                'file_type': file_type,
+                                'file_path': file_path,
+                                'snippet': snippet,
+                                'title': detai.ten_de_tai,
+                                'code': detai.ma_de_tai,
+                                'url': url_for('main.detai_detail', id=detai.id)
+                            })
+            
+            # Tìm trong file sáng kiến
+            if search_type in ['all', 'sangkien']:
+                for sangkien in SangKien.query.all():
+                    files_to_check = []
+                    if sangkien.file_sau_sua:
+                        files_to_check.append(('Hồ sơ sáng kiến', sangkien.file_sau_sua))
+                    if sangkien.bien_ban_de_cuong:
+                        files_to_check.append(('Giấy chứng nhận', sangkien.bien_ban_de_cuong))
+                    if sangkien.bien_ban_nghiem_thu:
+                        files_to_check.append(('BC Ứng dụng', sangkien.bien_ban_nghiem_thu))
+                    
+                    for file_type, file_path in files_to_check:
+                        full_path = os.path.join(upload_folder, file_path)
+                        found, snippet = search_in_file(full_path, search_query)
+                        if found:
+                            results['file_matches'].append({
+                                'type': 'sangkien',
+                                'item': sangkien,
+                                'file_type': file_type,
+                                'file_path': file_path,
+                                'snippet': snippet,
+                                'title': sangkien.ten_sang_kien,
+                                'code': sangkien.ma_sang_kien,
+                                'url': url_for('main.sangkien_detail', id=sangkien.id)
+                            })
+            
+            # Tìm trong file tài liệu
+            if search_type in ['all', 'tailieu']:
+                for tailieu in TaiLieu.query.all():
+                    files_to_check = []
+                    if tailieu.file_sau_sua:
+                        files_to_check.append(('Tài liệu', tailieu.file_sau_sua))
+                    if tailieu.bien_ban_ban:
+                        files_to_check.append(('BB Ban', tailieu.bien_ban_ban))
+                    if tailieu.bien_ban_de_cuong:
+                        files_to_check.append(('BB Đề cương', tailieu.bien_ban_de_cuong))
+                    if tailieu.bien_ban_nghiem_thu:
+                        files_to_check.append(('BB Nghiệm thu', tailieu.bien_ban_nghiem_thu))
+                    
+                    for file_type, file_path in files_to_check:
+                        full_path = os.path.join(upload_folder, file_path)
+                        found, snippet = search_in_file(full_path, search_query)
+                        if found:
+                            results['file_matches'].append({
+                                'type': 'tailieu',
+                                'item': tailieu,
+                                'file_type': file_type,
+                                'file_path': file_path,
+                                'snippet': snippet,
+                                'title': tailieu.ten_tai_lieu,
+                                'code': tailieu.ma_tai_lieu,
+                                'url': url_for('main.tailieu_detail', id=tailieu.id)
+                            })
+    
+    return render_template('timkiem.html', 
+                         search_query=search_query,
+                         search_type=search_type,
+                         search_in_files=search_in_files,
+                         results=results)

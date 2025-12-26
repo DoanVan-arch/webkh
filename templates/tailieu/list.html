@@ -45,7 +45,7 @@
             </thead>
             <tbody>
                 {% for gt in pagination.items %}
-                <tr {% if current_user.don_vi == gt.don_vi %}style="background: #e8f5e9;"{% endif %}>
+                <tr {% if current_user.don_vi == gt.don_vi %}style="background: #e8f5e9;"{% endif %} ondblclick="window. location. href='{{ url_for('main.tailieu_detail', id=gt.id) }}'">               
                     <td><strong>{{ gt.ma_tai_lieu }}</strong></td>
                     <td>{{ gt.ten_tai_lieu }}</td>
                     <td><span class="badge badge-info">{{ gt.loai or 'N/A' }}</span></td>

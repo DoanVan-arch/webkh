@@ -1,0 +1,93 @@
+<!-- Công trình nghiên cứu -->
+        <div class="row"> 
+            <!-- Đề tài đã thực hiện -->
+            {% if detai_list %}
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #667eea;">
+                    <div class="card-header bg-primary text-white">
+                        <strong><i class="fas fa-project-diagram"></i> Đề tài đã thực hiện ({{ detai_list|length }})</strong>
+                    </div>
+                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="list-unstyled">
+                            {% for dt in detai_list %}
+                            <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                                <a href="{{ url_for('main.detai_detail', id=dt.id) }}" class="text-decoration-none">
+                                    <strong>{{ dt.ten_de_tai }}</strong>
+                                </a>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 0.3rem;">
+                                    <span class="badge badge-info">{{ dt.cap_do }}</span>
+                                    <span class="badge badge-secondary">{{ dt.trang_thai }}</span>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sáng kiến -->
+          {% if sangkien_list %}
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #f5576c;">
+                    <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <strong><i class="fas fa-lightbulb"></i> Sáng kiến ({{ sangkien_list|length }})</strong>
+                    </div>
+                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="list-unstyled">
+                            {% for sk in sangkien_list %}
+                            <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                                <a href="{{ url_for('main.sangkien_detail', id=sk.id) }}" class="text-decoration-none">
+                                    <strong>{{ sk.ten_sang_kien }}</strong>
+                                </a>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 0.3rem;">
+                                    <span class="badge badge-warning">{{ sk.cap_cong_nhan }}</span>
+                                    <span class="badge badge-secondary">{{ sk.trang_thai }}</span>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>  
+        
+        <!-- Tài liệu xuất bản -->
+        {% if tailieu_list %}
+        <div class="card mb-3" style="border-left: 4px solid #ffa726;">
+            <div class="card-header" style="background-color: #fff3e0;">
+                <strong><i class="fas fa-book-open"></i> Tài liệu xuất bản ({{ tailieu_list|length }})</strong>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-unstyled">
+                    {% for tl in tailieu_list %}
+                    <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                        <a href="{{ url_for('main.tailieu_detail', id=tl.id) }}" class="text-decoration-none">
+                            <strong>{{ tl.ten_tai_lieu }}</strong>
+                        </a>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 0.3rem;">
+                            <span class="badge badge-info">{{ tl.loai }}</span>
+                            {% if tl.nam_xuat_ban %}
+                                <span class="badge badge-secondary">Năm {{ tl.nam_xuat_ban }}</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+         
+        <div class="col-md-4 text-right">
+            {% if tiemluc.anh_chan_dung %}
+            <img src="{{ url_for('static', filename='uploads/' + tiemluc.anh_chan_dung) }}" 
+                 alt="Ảnh chân dung" class="img-thumbnail" 
+                 style="width: 120px; height: 150px; object-fit: cover; border: 3px solid white;">
+            {% else %}
+            <div style="width: 120px; height: 150px; background-color: rgba(255,255,255,0.3); 
+                       display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                <i class="fas fa-user" style="font-size: 3rem; color: rgba(255,255,255,0.7);"></i>
+            </div>
+            {% endif %}
+        </div>

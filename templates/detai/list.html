@@ -47,7 +47,7 @@
             </thead>
             <tbody>
                 {% for detai in pagination.items %}
-                <tr class="hoverable-row" {% if detai.mo_ta %}title="{{ detai.mo_ta }}"{% endif %}>
+                <tr class="hoverable-row" {% if detai.mo_ta %}title="{{ detai.mo_ta }}"{% endif %} ondblclick="window.location='{{ url_for('main.detai_detail', id=detai.id) }}'">
                     <td><strong>{{ detai.ma_de_tai }}</strong></td>
                     <td>{{ detai.ten_de_tai }}</td>
                     <td>{{ detai.chu_nhiem }}</td>

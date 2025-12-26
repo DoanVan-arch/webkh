@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết tài liệu - {{ tailieu.ma_tai_lieu }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.tailieu_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
+    {% if current_user.role == 'admin' or current_user.don_vi == tailieu.don_vi %}
+    <a href="{{ url_for('main.tailieu_edit', id=tailieu.id) }}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Chỉnh sửa
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 style="margin: 0;"><i class="fas fa-book"></i> {{ tailieu.ten_tai_lieu }}</h4>
+        <small>Mã tài liệu: <strong>{{ tailieu.ma_tai_lieu }}</strong></small>
+    </div>
+    <div class="card-body">
+        <!-- Thông tin cơ bản -->
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <td style="width: 150px;"><strong><i class="fas fa-tags"></i> Loại:</strong></td>
+                        <td><span class="badge badge-info">{{ tailieu.loai or 'N/A' }}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-users"></i> Tác giả:</strong></td>
+                        <td>
+                            {% if tailieu.tac_gia %}
+                                <ul style="margin: 0; padding-left: 1.2rem;">
+                                    {% for author in tailieu.tac_gia.split('\n') %}
+                                        {% if author.strip() %}
+                                        <li>{{ author.strip() }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <td style="width: 150px;"><strong><i class="fas fa-tasks"></i> Trạng thái:</strong></td>
+                        <td>
+                            {% if tailieu.trang_thai == 'Hoàn thành' %}
+                                <span class="badge badge-success">{{ tailieu.trang_thai }}</span>
+                            {% elif tailieu.trang_thai == 'Đang thực hiện' %}
+                                <span class="badge badge-primary">{{ tailieu.trang_thai }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ tailieu.trang_thai or 'N/A' }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-trophy"></i> Kết quả:</strong></td>
+                        <td>{{ tailieu.ket_qua or 'N/A' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ban tài liệu -->
+        {% if ban_members %}
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header bg-info text-white">
+                <strong><i class="fas fa-users"></i> Ban tài liệu</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">STT</th>
+                            <th style="width: 200px;">Vai trò</th>
+                            <th>Họ và tên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in ban_members %}
+                        <tr>
+                            <td><strong>{{ loop.index }}</strong></td>
+                            <td><span class="badge badge-info">{{ member.vai_tro }}</span></td>
+                            <td>{{ member.ho_ten }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Hội đồng duyệt đề cương -->
+        {% if hoi_dong_de_cuong_members %}
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header bg-warning text-dark">
+                <strong><i class="fas fa-users-cog"></i> Hội đồng duyệt đề cương</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">STT</th>
+                            <th style="width: 200px;">Vai trò</th>
+                            <th>Họ và tên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in hoi_dong_de_cuong_members %}
+                        <tr>
+                            <td><strong>{{ loop.index }}</strong></td>
+                            <td><span class="badge badge-warning">{{ member.vai_tro }}</span></td>
+                            <td>{{ member.ho_ten }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Hội đồng nghiệm thu -->
+        {% if hoi_dong_nghiem_thu_members %}
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header bg-success text-white">
+                <strong><i class="fas fa-user-check"></i> Hội đồng nghiệm thu</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">STT</th>
+                            <th style="width: 200px;">Vai trò</th>
+                            <th>Họ và tên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in hoi_dong_nghiem_thu_members %}
+                        <tr>
+                            <td><strong>{{ loop.index }}</strong></td>
+                            <td><span class="badge badge-success">{{ member.vai_tro }}</span></td>
+                            <td>{{ member.ho_ten }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Files đính kèm -->
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header bg-primary text-white">
+                <strong><i class="fas fa-paperclip"></i> Tài liệu đính kèm</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if tailieu.file_tai_lieu %}
+                    <div class="col-md-3">
+                        <a href="{{ url_for('static', filename='uploads/' + tailieu.file_tai_lieu) }}" target="_blank" class="btn btn-primary btn-block">
+                            <i class="fas fa-file-pdf"></i> Tài liệu chính
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if tailieu.bien_ban_ban %}
+                    <div class="col-md-3">
+                        <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_ban) }}" target="_blank" class="btn btn-secondary btn-block">
+                            <i class="fas fa-file"></i> BB Ban
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if tailieu.bien_ban_de_cuong %}
+                    <div class="col-md-3">
+                        <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_de_cuong) }}" target="_blank" class="btn btn-secondary btn-block">
+                            <i class="fas fa-file"></i> BB Đề cương
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if tailieu.bien_ban_nghiem_thu %}
+                    <div class="col-md-3">
+                        <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-secondary btn-block">
+                            <i class="fas fa-file"></i> BB Nghiệm thu
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not tailieu.file_tai_lieu and not tailieu.bien_ban_ban and not tailieu.bien_ban_de_cuong and not tailieu.bien_ban_nghiem_thu %}
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Chưa có file đính kèm
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

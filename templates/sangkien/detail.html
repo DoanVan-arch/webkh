@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết sáng kiến - {{ sangkien.ma_sang_kien }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.sangkien_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
+    {% if current_user.role == 'admin' or current_user.don_vi == sangkien.don_vi %}
+    <a href="{{ url_for('main.sangkien_edit', id=sangkien.id) }}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Chỉnh sửa
+    </a>
+    <form method="POST" action="{{ url_for('main.sangkien_delete', id=sangkien.id) }}" style="display: inline;" 
+          onsubmit="return confirm('Bạn có chắc chắn muốn xóa sáng kiến này?');">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Xóa
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+        <h4 style="margin: 0;"><i class="fas fa-lightbulb"></i> {{ sangkien.ten_sang_kien }}</h4>
+        <div style="margin-top: 0.5rem;">
+            <span class="badge" style="background-color: rgba(255,255,255,0.3); font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                Mã: {{ sangkien.ma_sang_kien }}
+            </span>
+            <span class="badge" style="background-color: rgba(255,255,255,0.3); font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                <i class="fas fa-building"></i> {{ sangkien.don_vi }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Thông tin cơ bản -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #f093fb;">
+                    <div class="card-body">
+                        <h6 style="color: #f5576c;"><i class="fas fa-info-circle"></i> Thông tin chung</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td style="width: 150px;"><strong><i class="fas fa-tag"></i> Loại:</strong></td>
+                                <td>
+                                    <span class="badge badge-primary" style="font-size: 0.9rem;">
+                                        {{ sangkien.loai or 'N/A' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-user-tie"></i> Tác giả:</strong></td>
+                                <td><strong class="text-primary">{{ sangkien.tac_gia or 'N/A' }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-book-open"></i> Lĩnh vực:</strong></td>
+                                <td>{{ sangkien.linh_vuc or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-award"></i> Cấp công nhận:</strong></td>
+                                <td>
+                                    {% if sangkien.cap_cong_nhan %}
+                                        <span class="badge badge-warning">{{ sangkien.cap_cong_nhan }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #43e97b;">
+                    <div class="card-body">
+                        <h6 class="text-success"><i class="fas fa-calendar-alt"></i> Thời gian & Trạng thái</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td style="width: 150px;"><strong><i class="fas fa-calendar"></i> Năm công nhận:</strong></td>
+                                <td>
+                                    {% if sangkien.nam_cong_nhan %}
+                                        <span class="badge badge-info">{{ sangkien.nam_cong_nhan }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-calendar-plus"></i> Ngày bắt đầu:</strong></td>
+                                <td>
+                                    {% if sangkien.ngay_bat_dau %}
+                                        <span class="badge badge-primary">{{ sangkien.ngay_bat_dau.strftime('%d/%m/%Y') }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-calendar-check"></i> Ngày kết thúc:</strong></td>
+                                <td>
+                                    {% if sangkien.ngay_ket_thuc %}
+                                        <span class="badge badge-success">{{ sangkien.ngay_ket_thuc.strftime('%d/%m/%Y') }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-tasks"></i> Trạng thái:</strong></td>
+                                <td>
+                                    {% if sangkien.trang_thai == 'Hoàn thành' %}
+                                        <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            <i class="fas fa-check-circle"></i> {{ sangkien.trang_thai }}
+                                        </span>
+                                    {% elif sangkien.trang_thai == 'Đang thực hiện' %}
+                                        <span class="badge badge-primary" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            <i class="fas fa-spinner"></i> {{ sangkien.trang_thai }}
+                                        </span>
+                                    {% elif sangkien.trang_thai == 'Chờ duyệt' %}
+                                        <span class="badge badge-warning" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            <i class="fas fa-clock"></i> {{ sangkien.trang_thai }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            {{ sangkien.trang_thai or 'N/A' }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mô tả -->
+        {% if sangkien.mo_ta %}
+        <div class="card mb-3" style="border-left: 4px solid #4facfe;">
+            <div class="card-header bg-light">
+                <strong><i class="fas fa-align-left"></i> Mô tả sáng kiến</strong>
+            </div>
+            <div class="card-body" style="white-space: pre-line;">
+                {{ sangkien.mo_ta }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Kết quả & Hiệu quả -->
+        <div class="row">
+            {% if sangkien.ket_qua %}
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #ffa726;">
+                    <div class="card-header" style="background-color: #fff3e0;">
+                        <strong><i class="fas fa-trophy"></i> Kết quả đạt được</strong>
+                    </div>
+                    <div class="card-body" style="white-space: pre-line;">
+                        {{ sangkien.ket_qua }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if sangkien.hieu_qua %}
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #43e97b;">
+                    <div class="card-header" style="background-color: #e8f5e9;">
+                        <strong><i class="fas fa-chart-line"></i> Hiệu quả ứng dụng</strong>
+                    </div>
+                    <div class="card-body" style="white-space: pre-line;">
+                        {{ sangkien.hieu_qua }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Thành viên tham gia -->
+        {% if sangkien.thanh_vien %}
+        <div class="card mb-3" style="border-left: 4px solid #667eea;">
+            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <strong><i class="fas fa-users"></i> Thành viên tham gia</strong>
+            </div>
+            <div class="card-body">
+                <ul style="margin: 0; padding-left: 1.5rem; line-height: 2;">
+                    {% for member in sangkien.thanh_vien.split('\n') %}
+                        {% if member.strip() %}
+                        <li style="margin-bottom: 0.5rem;">
+                            <i class="fas fa-user-circle" style="color: #667eea;"></i> 
+                            <strong>{{ member.strip() }}</strong>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Files đính kèm -->
+        <div class="card" style="border-left: 4px solid #00d2ff;">
+            <div class="card-header" style="background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); color: white;">
+                <strong><i class="fas fa-paperclip"></i> Tài liệu đính kèm</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if sangkien.file_sang_kien %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + sangkien.file_sang_kien) }}" target="_blank" 
+                           class="btn btn-primary btn-block" style="padding: 1rem;">
+                            <i class="fas fa-file-pdf" style="font-size: 1.5rem;"></i>
+                            <div style="margin-top: 0.5rem;">Hồ sơ sáng kiến</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if sangkien.giay_chung_nhan %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + sangkien.giay_chung_nhan) }}" target="_blank" 
+                           class="btn btn-success btn-block" style="padding: 1rem;">
+                            <i class="fas fa-certificate" style="font-size: 1.5rem;"></i>
+                            <div style="margin-top: 0.5rem;">Giấy chứng nhận</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if sangkien.bao_cao_ung_dung %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + sangkien.bao_cao_ung_dung) }}" target="_blank" 
+                           class="btn btn-warning btn-block" style="padding: 1rem;">
+                            <i class="fas fa-file-alt" style="font-size: 1.5rem;"></i>
+                            <div style="margin-top: 0.5rem;">BC Ứng dụng</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not sangkien.file_sang_kien and not sangkien.giay_chung_nhan and not sangkien.bao_cao_ung_dung %}
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Chưa có file đính kèm
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin hệ thống -->
+        <div class="card mt-3" style="background-color: #f8f9fa;">
+            <div class="card-body">
+                <small class="text-muted">
+                    <i class="fas fa-clock"></i> Tạo lúc: {{ sangkien.created_at.strftime('%d/%m/%Y %H:%M') if sangkien.created_at else 'N/A' }}
+                    {% if sangkien.updated_at %}
+                        | <i class="fas fa-edit"></i> Cập nhật: {{ sangkien.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+.table td, .table th {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

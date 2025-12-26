@@ -45,7 +45,7 @@
             </thead>
             <tbody>
                 {% for tl in pagination.items %}
-                <tr>
+                <tr style="cursor: pointer;" ondblclick="window.location='{{ url_for('main.tiemluc_detail', id=tl.id) }}'">
                     <td><strong>{{ tl.ma_can_bo }}</strong></td>
                     <td>{{ tl.ho_ten }}</td>
                     <td>{{ tl.don_vi or 'N/A' }}</td>
@@ -78,18 +78,20 @@
                         N/A
                         {% endif %}
                     </td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
+                        <a href="{{ url_for('main.tiemluc_detail', id=tl.id) }}" class="btn btn-info" style="padding: 0.4rem 0.8rem;" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </a>
                         {% if current_user.role == 'admin' or tl.don_vi == current_user.don_vi %}
-                        <a href="{{ url_for('main.tiemluc_edit', id=tl.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;">
+                        <a href="{{ url_for('main.tiemluc_edit', id=tl.id) }}" class="btn btn-warning" style="padding: 0.4rem 0.8rem;" title="Chỉnh sửa">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="{{ url_for('main.tiemluc_delete', id=tl.id) }}" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                        {% else %}
-                        <span class="badge badge-info" style="padding: 0.5rem 1rem;">
-                            <i class="fas fa-eye"></i> Chỉ xem
-                        </span>
+                        <form method="POST" action="{{ url_for('main.tiemluc_delete', id=tl.id) }}" style="display: inline;" 
+                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa?')">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem;" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                         {% endif %}
                     </td>
                 </tr>

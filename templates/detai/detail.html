@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết đề tài - {{ detai.ma_de_tai }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('main.detai_list') }}" class="btn btn-info">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
+    {% if current_user.role == 'admin' or current_user.don_vi == detai.don_vi %}
+    <a href="{{ url_for('main.detai_edit', id=detai.id) }}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Chỉnh sửa
+    </a>
+    <form method="POST" action="{{ url_for('main.detai_delete', id=detai.id) }}" style="display: inline;" 
+          onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề tài này?');">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Xóa
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h4 style="margin: 0;"><i class="fas fa-project-diagram"></i> {{ detai.ten_de_tai }}</h4>
+        <div style="margin-top: 0.5rem;">
+            <span class="badge" style="background-color: rgba(255,255,255,0.3); font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                Mã: {{ detai.ma_de_tai }}
+            </span>
+            <span class="badge" style="background-color: rgba(255,255,255,0.3); font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                <i class="fas fa-building"></i> {{ detai.don_vi }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Thông tin cơ bản -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #667eea;">
+                    <div class="card-body">
+                        <h6 class="text-primary"><i class="fas fa-info-circle"></i> Thông tin chung</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td style="width: 150px;"><strong><i class="fas fa-layer-group"></i> Cấp độ:</strong></td>
+                                <td>
+                                    {% if detai.cap_do == 'Bộ' %}
+                                        <span class="badge badge-danger" style="font-size: 0.9rem;">{{ detai.cap_do }}</span>
+                                    {% elif detai.cap_do == 'Tỉnh' %}
+                                        <span class="badge badge-warning" style="font-size: 0.9rem;">{{ detai.cap_do }}</span>
+                                    {% elif detai.cap_do == 'Trường' %}
+                                        <span class="badge badge-info" style="font-size: 0.9rem;">{{ detai.cap_do }}</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary" style="font-size: 0.9rem;">{{ detai.cap_do or 'N/A' }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-book-open"></i> Lĩnh vực:</strong></td>
+                                <td>{{ detai.linh_vuc or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-user-tie"></i> Chủ nhiệm:</strong></td>
+                                <td><strong class="text-primary">{{ detai.chu_nhiem or 'N/A' }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-user-graduate"></i> Chức danh:</strong></td>
+                                <td>{{ detai.chuc_danh_chu_nhiem or 'N/A' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card mb-3" style="border-left: 4px solid #43e97b;">
+                    <div class="card-body">
+                        <h6 class="text-success"><i class="fas fa-calendar-alt"></i> Thời gian & Trạng thái</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td style="width: 150px;"><strong><i class="fas fa-calendar-plus"></i> Ngày bắt đầu:</strong></td>
+                                <td>
+                                    {% if detai.ngay_bat_dau %}
+                                        <span class="badge badge-primary">{{ detai.ngay_bat_dau.strftime('%d/%m/%Y') }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-calendar-check"></i> Ngày kết thúc:</strong></td>
+                                <td>
+                                    {% if detai.ngay_ket_thuc %}
+                                        <span class="badge badge-success">{{ detai.ngay_ket_thuc.strftime('%d/%m/%Y') }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-tasks"></i> Trạng thái:</strong></td>
+                                <td>
+                                    {% if detai.trang_thai == 'Hoàn thành' %}
+                                        <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            <i class="fas fa-check-circle"></i> {{ detai.trang_thai }}
+                                        </span>
+                                    {% elif detai.trang_thai == 'Đang thực hiện' %}
+                                        <span class="badge badge-primary" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            <i class="fas fa-spinner"></i> {{ detai.trang_thai }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            {{ detai.trang_thai or 'N/A' }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong><i class="fas fa-trophy"></i> Kết quả:</strong></td>
+                                <td>
+                                    {% if detai.ket_qua %}
+                                        <span class="badge badge-warning" style="font-size: 0.9rem;">{{ detai.ket_qua }}</span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mô tả chi tiết -->
+        {% if detai.mo_ta %}
+        <div class="card mb-3" style="border-left: 4px solid #f093fb;">
+            <div class="card-header bg-light">
+                <strong><i class="fas fa-align-left"></i> Mô tả chi tiết</strong>
+            </div>
+            <div class="card-body" style="white-space: pre-line;">
+                {{ detai.mo_ta }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Thành viên tham gia -->
+        {% if detai.thanh_vien %}
+        <div class="card mb-3" style="border-left: 4px solid #4facfe;">
+            <div class="card-header bg-info text-white">
+                <strong><i class="fas fa-users"></i> Thành viên tham gia</strong>
+            </div>
+            <div class="card-body">
+                <ul style="margin: 0; padding-left: 1.5rem; line-height: 2;">
+                    {% for member in detai.thanh_vien.split('\n') %}
+                        {% if member.strip() %}
+                        <li style="margin-bottom: 0.5rem;">
+                            <i class="fas fa-user-circle text-info"></i> 
+                            <strong>{{ member.strip() }}</strong>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Hội đồng đánh giá -->
+        {% if hoi_dong_members %}
+        <div class="card mb-3" style="border-left: 4px solid #f5576c;">
+            <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <strong><i class="fas fa-users-cog"></i> Hội đồng đánh giá</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover table-striped">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th style="width: 60px;">STT</th>
+                            <th style="width: 200px;">Vai trò</th>
+                            <th>Họ và tên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in hoi_dong_members %}
+                        <tr>
+                            <td><strong>{{ loop.index }}</strong></td>
+                            <td>
+                                {% if 'Chủ tịch' in member.vai_tro %}
+                                    <span class="badge badge-danger">{{ member.vai_tro }}</span>
+                                {% elif 'Phản biện' in member.vai_tro %}
+                                    <span class="badge badge-warning">{{ member.vai_tro }}</span>
+                                {% elif 'Thư ký' in member.vai_tro %}
+                                    <span class="badge badge-info">{{ member.vai_tro }}</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ member.vai_tro }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ member.ho_ten }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Files đính kèm -->
+        <div class="card" style="border-left: 4px solid #00d2ff;">
+            <div class="card-header" style="background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); color: white;">
+                <strong><i class="fas fa-paperclip"></i> Tài liệu đính kèm</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if detai.file_de_tai %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + detai.file_de_tai) }}" target="_blank" 
+                           class="btn btn-primary btn-block" style="padding: 1rem;">
+                            <i class="fas fa-file-pdf" style="font-size: 1.5rem;"></i>
+                            <div style="margin-top: 0.5rem;">Đề cương</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if detai.bien_ban_hop %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + detai.bien_ban_hop) }}" target="_blank" 
+                           class="btn btn-secondary btn-block" style="padding: 1rem;">
+                            <i class="fas fa-file-alt" style="font-size: 1.5rem;"></i>
+                            <div style="margin-top: 0.5rem;">Biên bản họp</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if detai.bao_cao_nghiem_thu %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + detai.bao_cao_nghiem_thu) }}" target="_blank" 
+                           class="btn btn-success btn-block" style="padding: 1rem;">
+                            <i class="fas fa-file-contract" style="font-size: 1.5rem;"></i>
+                            <div style="margin-top: 0.5rem;">Nghiệm thu</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not detai.file_de_tai and not detai.bien_ban_hop and not detai.bao_cao_nghiem_thu %}
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Chưa có file đính kèm
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin hệ thống -->
+        <div class="card mt-3" style="background-color: #f8f9fa;">
+            <div class="card-body">
+                <small class="text-muted">
+                    <i class="fas fa-clock"></i> Tạo lúc: {{ detai.created_at.strftime('%d/%m/%Y %H:%M') if detai.created_at else 'N/A' }}
+                    {% if detai.updated_at %}
+                        | <i class="fas fa-edit"></i> Cập nhật: {{ detai.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+.table td, .table th {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

@@ -24,6 +24,45 @@
     min-width: 300px;
 }
 
+.search-options {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(67, 233, 123, 0.05), rgba(56, 249, 215, 0.05));
+    border-radius: 8px;
+    border-left: 4px solid var(--success-color);
+}
+
+.search-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.search-option label {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+.file-search-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 .search-type-tabs {
     display: flex;
     gap: 0.5rem;
@@ -77,20 +116,13 @@
     transform: translateX(4px);
 }
 
-.result-item.detai {
-    border-left-color: var(--primary-color);
-}
-
-.result-item.sangkien {
-    border-left-color: var(--success-color);
-}
-
-.result-item.tailieu {
-    border-left-color: var(--info-color);
-}
-
-.result-item.tiemluc {
-    border-left-color: var(--warning-color);
+.result-item.detai { border-left-color: #667eea; }
+.result-item.sangkien { border-left-color: #f093fb; }
+.result-item.tailieu { border-left-color: #4facfe; }
+.result-item.tiemluc { border-left-color: #43e97b; }
+.result-item.file-match { 
+    border-left-color: #764ba2;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03), rgba(118, 75, 162, 0.03));
 }
 
 .result-title {
@@ -119,6 +151,26 @@
     color: #555;
     line-height: 1.6;
     margin-bottom: 0.75rem;
+}
+
+.file-snippet {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid #764ba2;
+    margin-bottom: 0.75rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.file-snippet mark {
+    background: #ffeb3b;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
 }
 
 .result-actions {
@@ -168,6 +220,31 @@
     color: var(--success-color);
     font-weight: bold;
 }
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading-spinner.active {
+    display: block;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
 {% endblock %}
 
@@ -180,7 +257,7 @@
 </div>
 
 <div class="search-container">
-    <form method="GET" action="{{ url_for('main.timkiem') }}">
+    <form method="GET" action="{{ url_for('main.timkiem') }}" id="searchForm">
         <div class="search-input-group">
             <input type="text" 
                    name="q" 
@@ -191,6 +268,26 @@
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-search"></i> Tìm kiếm
             </button>
+        </div>
+
+        <!-- Tùy chọn tìm kiếm -->
+        <div class="search-options">
+            <div class="search-option">
+                <input type="checkbox" 
+                       id="searchInFiles" 
+                       name="search_files" 
+                       value="1"
+                       {% if search_in_files %}checked{% endif %}
+                       onchange="document.getElementById('searchForm').submit()">
+                <label for="searchInFiles">
+                    <i class="fas fa-file-word"></i> Tìm kiếm trong nội dung file (DOCX, PDF)
+                </label>
+            </div>
+            {% if search_in_files %}
+            <span class="file-search-badge">
+                <i class="fas fa-magic"></i> Chế độ tìm kiếm nâng cao
+            </span>
+            {% endif %}
         </div>
 
         <div class="search-type-tabs">
@@ -214,11 +311,58 @@
     </form>
 </div>
 
+<!-- Loading spinner -->
+<div class="loading-spinner" id="loadingSpinner">
+    <div class="spinner"></div>
+    <p><i class="fas fa-file-search"></i> Đang tìm kiếm trong nội dung file...</p>
+</div>
+
 {% if search_query %}
+
+<!-- Kết quả tìm trong file -->
+{% if results.file_matches %}
+<div class="result-section">
+    <h2 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem;">
+        <i class="fas fa-file-search"></i> Tìm thấy trong nội dung file
+        <span class="result-count">({{ results.file_matches|length }} kết quả)</span>
+    </h2>
+    {% for match in results.file_matches %}
+    <div class="result-item file-match">
+        <div class="result-title">
+            {{ match.title }}
+            <span class="badge badge-primary">{{ match.file_type }}</span>
+        </div>
+        <div class="result-meta">
+            <span><i class="fas fa-hashtag"></i> {{ match.code }}</span>
+            <span>
+                {% if match.type == 'detai' %}
+                    <i class="fas fa-project-diagram"></i> Đề tài
+                {% elif match.type == 'sangkien' %}
+                    <i class="fas fa-lightbulb"></i> Sáng kiến
+                {% elif match.type == 'tailieu' %}
+                    <i class="fas fa-book"></i> Tài liệu
+                {% endif %}
+            </span>
+            <span><i class="fas fa-file"></i> {{ match.file_path.split('/')[-1] }}</span>
+        </div>
+        <div class="file-snippet">{{ match.snippet|safe }}</div>
+        <div class="result-actions">
+            <a href="{{ match.url }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-eye"></i> Xem chi tiết
+            </a>
+            <a href="{{ url_for('static', filename='uploads/' + match.file_path) }}" target="_blank" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-download"></i> Tải file
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <!-- Kết quả đề tài -->
 {% if results.detai %}
 <div class="result-section">
-    <h2 style="color: var(--primary-color); margin-bottom: 1rem;">
+    <h2 style="color: #667eea; margin-bottom: 1rem;">
         <i class="fas fa-project-diagram"></i> Đề tài nghiên cứu
         <span class="result-count">({{ results.detai|length }} kết quả)</span>
     </h2>
@@ -245,7 +389,7 @@
         <div class="result-description">{{ dt.mo_ta[:200] }}{% if dt.mo_ta|length > 200 %}...{% endif %}</div>
         {% endif %}
         <div class="result-actions">
-            <a href="{{ url_for('main.detai_edit', id=dt.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+            <a href="{{ url_for('main.detai_detail', id=dt.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
                 <i class="fas fa-eye"></i> Xem chi tiết
             </a>
         </div>
@@ -257,7 +401,7 @@
 <!-- Kết quả sáng kiến -->
 {% if results.sangkien %}
 <div class="result-section">
-    <h2 style="color: var(--success-color); margin-bottom: 1rem;">
+    <h2 style="color: #f5576c; margin-bottom: 1rem;">
         <i class="fas fa-lightbulb"></i> Sáng kiến
         <span class="result-count">({{ results.sangkien|length }} kết quả)</span>
     </h2>
@@ -266,7 +410,7 @@
         <div class="result-title">{{ sk.ten_sang_kien }}</div>
         <div class="result-meta">
             <span><i class="fas fa-hashtag"></i> {{ sk.ma_sang_kien }}</span>
-            <span><i class="fas fa-user"></i> {{ sk.chu_nhiem }}</span>
+            <span><i class="fas fa-user"></i> {{ sk.tac_gia }}</span>
             <span><i class="fas fa-building"></i> {{ sk.don_vi }}</span>
             {% if sk.trang_thai %}
             <span>
@@ -284,7 +428,7 @@
         <div class="result-description">{{ sk.mo_ta[:200] }}{% if sk.mo_ta|length > 200 %}...{% endif %}</div>
         {% endif %}
         <div class="result-actions">
-            <a href="{{ url_for('main.sangkien_edit', id=sk.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+            <a href="{{ url_for('main.sangkien_detail', id=sk.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
                 <i class="fas fa-eye"></i> Xem chi tiết
             </a>
         </div>
@@ -296,7 +440,7 @@
 <!-- Kết quả tài liệu -->
 {% if results.tailieu %}
 <div class="result-section">
-    <h2 style="color: var(--info-color); margin-bottom: 1rem;">
+    <h2 style="color: #4facfe; margin-bottom: 1rem;">
         <i class="fas fa-book"></i> Giáo trình & Tài liệu
         <span class="result-count">({{ results.tailieu|length }} kết quả)</span>
     </h2>
@@ -305,7 +449,6 @@
         <div class="result-title">{{ tl.ten_tai_lieu }}</div>
         <div class="result-meta">
             <span><i class="fas fa-hashtag"></i> {{ tl.ma_tai_lieu }}</span>
-            <span><i class="fas fa-user"></i> {{ tl.chu_nhiem }}</span>
             <span><i class="fas fa-building"></i> {{ tl.don_vi }}</span>
             {% if tl.loai %}
             <span><span class="badge badge-info">{{ tl.loai }}</span></span>
@@ -318,7 +461,7 @@
         <div class="result-description">{{ tl.mo_ta[:200] }}{% if tl.mo_ta|length > 200 %}...{% endif %}</div>
         {% endif %}
         <div class="result-actions">
-            <a href="{{ url_for('main.giaotrinh_edit', id=tl.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+            <a href="{{ url_for('main.tailieu_detail', id=tl.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
                 <i class="fas fa-eye"></i> Xem chi tiết
             </a>
         </div>
@@ -330,7 +473,7 @@
 <!-- Kết quả tiềm lực -->
 {% if results.tiemluc %}
 <div class="result-section">
-    <h2 style="color: var(--warning-color); margin-bottom: 1rem;">
+    <h2 style="color: #43e97b; margin-bottom: 1rem;">
         <i class="fas fa-users"></i> Tiềm lực khoa học
         <span class="result-count">({{ results.tiemluc|length }} kết quả)</span>
     </h2>
@@ -340,15 +483,15 @@
         <div class="result-meta">
             <span><i class="fas fa-hashtag"></i> {{ tl.ma_can_bo }}</span>
             <span><i class="fas fa-building"></i> {{ tl.don_vi }}</span>
-            {% if tl.chuyen_mon %}
-            <span><i class="fas fa-graduation-cap"></i> {{ tl.chuyen_mon }}</span>
+            {% if tl.chuyen_nganh %}
+            <span><i class="fas fa-graduation-cap"></i> {{ tl.chuyen_nganh }}</span>
             {% endif %}
             {% if tl.hoc_vi %}
             <span><span class="badge badge-warning">{{ tl.hoc_vi }}</span></span>
             {% endif %}
         </div>
         <div class="result-actions">
-            <a href="{{ url_for('main.tiemluc_edit', id=tl.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
+            <a href="{{ url_for('main.tiemluc_detail', id=tl.id) }}" class="btn btn-warning" style="padding: 0.5rem 1rem;">
                 <i class="fas fa-eye"></i> Xem chi tiết
             </a>
         </div>
@@ -358,11 +501,14 @@
 {% endif %}
 
 <!-- Không có kết quả -->
-{% if not results.detai and not results.sangkien and not results.tailieu and not results.tiemluc %}
+{% if not results.detai and not results.sangkien and not results.tailieu and not results.tiemluc and not results.file_matches %}
 <div class="no-results">
     <i class="fas fa-search"></i>
     <h3>Không tìm thấy kết quả nào</h3>
     <p>Vui lòng thử lại với từ khóa khác hoặc kiểm tra lại chính tả</p>
+    {% if search_in_files %}
+    <p><small><i class="fas fa-info-circle"></i> Đã tìm kiếm trong nội dung file nhưng không có kết quả phù hợp</small></p>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -376,6 +522,7 @@
         <li>Tìm kiếm theo tên tác giả, chủ nhiệm đề tài</li>
         <li>Tìm kiếm theo đơn vị, chuyên môn</li>
         <li>Sử dụng các tab để lọc theo loại: Đề tài, Sáng kiến, Tài liệu, Tiềm lực</li>
+        <li><strong>MỚI:</strong> Bật "Tìm kiếm trong nội dung file" để tìm trong file DOCX, PDF đã upload</li>
     </ul>
 </div>
 
@@ -391,23 +538,43 @@
 <script>
 function setSearchType(type) {
     document.getElementById('searchType').value = type;
-    // Tự động submit form khi thay đổi type
     const searchQuery = document.querySelector('input[name="q"]').value;
     if (searchQuery) {
         document.querySelector('form').submit();
     }
 }
 
+// Show loading khi search trong file
+document.getElementById('searchForm').addEventListener('submit', function(e) {
+    const searchInFiles = document.getElementById('searchInFiles').checked;
+    if (searchInFiles) {
+        document.getElementById('loadingSpinner').classList.add('active');
+    }
+});
+
 // Highlight từ khóa trong kết quả
 document.addEventListener('DOMContentLoaded', function() {
     const searchQuery = "{{ search_query }}".toLowerCase();
     if (searchQuery) {
-        const resultItems = document.querySelectorAll('.result-title, .result-description');
+        const resultItems = document.querySelectorAll('.result-title, .result-description, .file-snippet');
         resultItems.forEach(item => {
+            if (item.classList.contains('file-snippet')) {
+                // Đã có mark trong snippet từ backend
+                return;
+            }
             const text = item.textContent;
             const regex = new RegExp(`(${searchQuery})`, 'gi');
-            const highlightedText = text.replace(regex, '<mark style="background: yellow; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+            const highlightedText = text.replace(regex, '<mark style="background: #ffeb3b; padding: 2px 4px; border-radius: 3px; font-weight: bold;">$1</mark>');
             item.innerHTML = highlightedText;
+        });
+        
+        // Highlight trong file snippet
+        const snippets = document.querySelectorAll('.file-snippet');
+        snippets.forEach(snippet => {
+            let html = snippet.innerHTML;
+            const regex = new RegExp(`(${searchQuery})`, 'gi');
+            html = html.replace(regex, '<mark>$1</mark>');
+            snippet.innerHTML = html;
         });
     }
 });
