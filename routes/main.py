@@ -167,10 +167,11 @@ def detai_add():
             chu_nhiem=request.form.get('chu_nhiem'),
             don_vi=don_vi,
             trang_thai=request.form.get('trang_thai'),
+            ket_qua = request.form.get('ket_qua'),
             created_by=current_user.id,
             cap_do=request.form.get('cap_do')
         )
-        
+      #  detai.ket_qua = request.form.get('ket_qua')
         # Xử lý ngày tháng
         ngay_bat_dau = request.form.get('ngay_bat_dau')
         ngay_ket_thuc = request.form.get('ngay_ket_thuc')
@@ -184,8 +185,12 @@ def detai_add():
         
         # Tạo thư mục riêng cho đề tài: detai_<id>_<ma_de_tai>
         folder_name = f"detai_{detai.id}_{detai.ma_de_tai}"
-        
+          # Xử lý upload các file
         # Xử lý upload các file
+        if 'file_sau_sua' in request.files:
+            file = request.files['file_sau_sua']
+            if file and file.filename:
+                detai.file_sau_sua = save_uploaded_file(file, folder_name,category='detai')
         if 'bien_ban_ban' in request.files:
             file = request.files['bien_ban_ban']
             if file and file.filename:
@@ -622,7 +627,7 @@ def tailieu_add():
             db.session.rollback()
             flash(f'Lỗi khi thêm tài liệu: {str(e)}', 'danger')
     
-    return render_template('tailieu/add.html')
+    return render_template('tailieu/add.html',don_vi_list=DON_VI_LIST, cap_do_list=CAP_DO_LIST)
 
 # Route tương thích
 @main_bp.route('/giaotrinh/add', methods=['GET', 'POST'])
@@ -1085,6 +1090,7 @@ def sangkien_add():
             linh_vuc=request.form.get('linh_vuc'),
             chu_nhiem=request.form.get('chu_nhiem'),
             don_vi=don_vi,
+            cap_do=request.form.get('cap_do'),
             trang_thai=request.form.get('trang_thai', 'Đang thực hiện'),
             ket_qua=request.form.get('ket_qua'),
             created_by=current_user.id
@@ -1093,6 +1099,7 @@ def sangkien_add():
         # Xử lý ngày tháng
         ngay_bat_dau = request.form.get('ngay_bat_dau')
         ngay_ket_thuc = request.form.get('ngay_ket_thuc')
+        sangkien.ket_qua = request.form.get('ket_qua')
         if ngay_bat_dau:
             sangkien.ngay_bat_dau = datetime.strptime(ngay_bat_dau, '%Y-%m-%d').date()
         if ngay_ket_thuc:
@@ -1938,17 +1945,30 @@ def download_file(filepath):
 @login_required
 def detai_detail(id):
     detai = DeTai.query.get_or_404(id)
+    hoi_dong_de_cuong_members = HoiDongDeCuongDeTai.query.filter_by(de_tai_id=id).all()
+    ban_members = BanDeTai.query.filter_by(de_tai_id=id).all()
+
     hoi_dong_members = HoiDongNghiemThuDeTai.query.filter_by(de_tai_id=id).all()
     return render_template('detai/detail.html', 
                          detai=detai,
-                         hoi_dong_members=hoi_dong_members)
+                         ban_members=ban_members,
+                         hoi_dong_members=hoi_dong_members,
+                         hoi_dong_de_cuong_members=hoi_dong_de_cuong_members)
+                         
 
 
 @main_bp.route('/sangkien/detail/<int:id>')
 @login_required
 def sangkien_detail(id):
     sangkien = SangKien.query.get_or_404(id)
-    return render_template('sangkien/detail.html', sangkien=sangkien)
+    hoi_dong_de_cuong_members = HoiDongDeCuongSangKien.query.filter_by(sang_kien_id=id).all()
+    ban_members = BanSangKien.query.filter_by(sang_kien_id=id).all()
+    hoi_dong_members = HoiDongNghiemThuSangKien.query.filter_by(sang_kien_id=id).all()
+
+    return render_template('sangkien/detail.html', sangkien=sangkien,
+                         ban_members=ban_members,
+                         hoi_dong_members=hoi_dong_members,
+                         hoi_dong_de_cuong_members=hoi_dong_de_cuong_members)
 
 
 @main_bp.route('/tiemluc/detail/<int:id>')
@@ -1982,7 +2002,6 @@ def tiemluc_detail(id):
 def timkiem():
     search_query = request.args.get('q', '').strip()
     search_type = request.args.get('type', 'all')
-    search_in_files = request.args.get('search_files', '0') == '1'  # Tìm trong file
     
     results = {
         'detai': [],
@@ -1992,140 +2011,371 @@ def timkiem():
         'file_matches': []  # Kết quả tìm trong file
     }
     
+    person_stats = []
+    file_search_query = ''
+    
     if search_query:
-        # Tìm kiếm thông thường trong database
-        if search_type in ['all', 'detai']:
-            results['detai'] = DeTai.query.filter(
-                db.or_(
-                    DeTai.ma_de_tai.ilike(f'%{search_query}%'),
-                    DeTai.ten_de_tai.ilike(f'%{search_query}%'),
-                    DeTai.chu_nhiem.ilike(f'%{search_query}%'),
-               #     DeTai.ban_thanh_vien.ilike(f'%{search_query}%'),
-                    DeTai.mo_ta.ilike(f'%{search_query}%'),
-                    DeTai.don_vi.ilike(f'%{search_query}%')
-                )
+        # ============= TÌM KIẾM THEO TÊN NGƯỜI =============
+        if search_type == 'person':
+            # Tìm trong các bảng liên quan
+            person_data = {}
+            
+            # 1. Tìm trong Ban đề tài
+            ban_detai = BanDeTai.query.filter(
+                BanDeTai.ho_ten.ilike(f'%{search_query}%')
             ).all()
-        
-        if search_type in ['all', 'sangkien']:
-            results['sangkien'] = SangKien.query.filter(
-                db.or_(
-                    SangKien.ma_sang_kien.ilike(f'%{search_query}%'),
-                    SangKien.ten_sang_kien.ilike(f'%{search_query}%'),
-                    SangKien.chu_nhiem.ilike(f'%{search_query}%'),
-                #   SangKien.ban_thanh_vien.ilike(f'%{search_query}%'),
-                    SangKien.mo_ta.ilike(f'%{search_query}%'),
-                    SangKien.don_vi.ilike(f'%{search_query}%')
-                )
+            for item in ban_detai:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                detai = DeTai.query.get(item.de_tai_id)
+                if detai:
+                    person_data[name]['detai_list'].append({
+                        'id': detai.id,
+                        'ten_de_tai': detai.ten_de_tai,
+                        'vai_tro': item.vai_tro
+                    })
+            
+            # 2. Tìm trong Ban sáng kiến
+            ban_sangkien = BanSangKien.query.filter(
+                BanSangKien.ho_ten.ilike(f'%{search_query}%')
             ).all()
-        
-        if search_type in ['all', 'tailieu']:
-            results['tailieu'] = TaiLieu.query.filter(
-                db.or_(
-                    TaiLieu.ma_tai_lieu.ilike(f'%{search_query}%'),
-                    TaiLieu.ten_tai_lieu.ilike(f'%{search_query}%'),
-                    TaiLieu.tac_gia.ilike(f'%{search_query}%'),
-                    TaiLieu.mo_ta.ilike(f'%{search_query}%'),
-                    TaiLieu.don_vi.ilike(f'%{search_query}%')
-                )
+            for item in ban_sangkien:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                sangkien = SangKien.query.get(item.sang_kien_id)
+                if sangkien:
+                    person_data[name]['sangkien_list'].append({
+                        'id': sangkien.id,
+                        'ten_sang_kien': sangkien.ten_sang_kien,
+                        'vai_tro': item.vai_tro
+                    })
+            
+            # 3. Tìm trong Ban tài liệu
+            ban_tailieu = BanTaiLieu.query.filter(
+                BanTaiLieu.ho_ten.ilike(f'%{search_query}%')
             ).all()
-        
-        if search_type in ['all', 'tiemluc']:
-            results['tiemluc'] = TiemLuc.query.filter(
-                db.or_(
-                    TiemLuc.ma_can_bo.ilike(f'%{search_query}%'),
-                    TiemLuc.ho_ten.ilike(f'%{search_query}%'),
-                    TiemLuc.don_vi.ilike(f'%{search_query}%'),
-                    TiemLuc.chuyen_mon.ilike(f'%{search_query}%'),
-                    TiemLuc.kinh_nghiem.ilike(f'%{search_query}%')
-                )
+            for item in ban_tailieu:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                tailieu = TaiLieu.query.get(item.tai_lieu_id)
+                if tailieu:
+                    person_data[name]['tailieu_list'].append({
+                        'id': tailieu.id,
+                        'ten_tai_lieu': tailieu.ten_tai_lieu,
+                        'vai_tro': item.vai_tro
+                    })
+            
+            # 4. Tìm trong Hội đồng đề cương đề tài
+            hd_dc_detai = HoiDongDeCuongDeTai.query.filter(
+                HoiDongDeCuongDeTai.ho_ten.ilike(f'%{search_query}%')
             ).all()
+            for item in hd_dc_detai:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                detai = DeTai.query.get(item.de_tai_id)
+                if detai:
+                    person_data[name]['hoi_dong_list'].append({
+                        'loai_hoi_dong': 'HĐ Đề cương Đề tài',
+                        'ten': detai.ten_de_tai,
+                        'vai_tro': item.vai_tro,
+                        'url': url_for('main.detai_detail', id=detai.id)
+                    })
+            
+            # 5. Tìm trong Hội đồng nghiệm thu đề tài
+            hd_nt_detai = HoiDongNghiemThuDeTai.query.filter(
+                HoiDongNghiemThuDeTai.ho_ten.ilike(f'%{search_query}%')
+            ).all()
+            for item in hd_nt_detai:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                detai = DeTai.query.get(item.de_tai_id)
+                if detai:
+                    person_data[name]['hoi_dong_list'].append({
+                        'loai_hoi_dong': 'HĐ Nghiệm thu Đề tài',
+                        'ten': detai.ten_de_tai,
+                        'vai_tro': item.vai_tro,
+                        'url': url_for('main.detai_detail', id=detai.id)
+                    })
+            
+            # 6. Tìm trong Hội đồng đề cương sáng kiến
+            hd_dc_sangkien = HoiDongDeCuongSangKien.query.filter(
+                HoiDongDeCuongSangKien.ho_ten.ilike(f'%{search_query}%')
+            ).all()
+            for item in hd_dc_sangkien:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                sangkien = SangKien.query.get(item.sang_kien_id)
+                if sangkien:
+                    person_data[name]['hoi_dong_list'].append({
+                        'loai_hoi_dong': 'HĐ Đề cương Sáng kiến',
+                        'ten': sangkien.ten_sang_kien,
+                        'vai_tro': item.vai_tro,
+                        'url': url_for('main.sangkien_detail', id=sangkien.id)
+                    })
+            
+            # 7. Tìm trong Hội đồng nghiệm thu sáng kiến
+            hd_nt_sangkien = HoiDongNghiemThuSangKien.query.filter(
+                HoiDongNghiemThuSangKien.ho_ten.ilike(f'%{search_query}%')
+            ).all()
+            for item in hd_nt_sangkien:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                sangkien = SangKien.query.get(item.sang_kien_id)
+                if sangkien:
+                    person_data[name]['hoi_dong_list'].append({
+                        'loai_hoi_dong': 'HĐ Nghiệm thu Sáng kiến',
+                        'ten': sangkien.ten_sang_kien,
+                        'vai_tro': item.vai_tro,
+                        'url': url_for('main.sangkien_detail', id=sangkien.id)
+                    })
+            
+            # 8. Tìm trong Hội đồng đề cương tài liệu
+            hd_dc_tailieu = HoiDongDeCuongTaiLieu.query.filter(
+                HoiDongDeCuongTaiLieu.ho_ten.ilike(f'%{search_query}%')
+            ).all()
+            for item in hd_dc_tailieu:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                tailieu = TaiLieu.query.get(item.tai_lieu_id)
+                if tailieu:
+                    person_data[name]['hoi_dong_list'].append({
+                        'loai_hoi_dong': 'HĐ Đề cương Tài liệu',
+                        'ten': tailieu.ten_tai_lieu,
+                        'vai_tro': item.vai_tro,
+                        'url': url_for('main.tailieu_detail', id=tailieu.id)
+                    })
+            
+            # 9. Tìm trong Hội đồng nghiệm thu tài liệu
+            hd_nt_tailieu = HoiDongNghiemThuTaiLieu.query.filter(
+                HoiDongNghiemThuTaiLieu.ho_ten.ilike(f'%{search_query}%')
+            ).all()
+            for item in hd_nt_tailieu:
+                name = item.ho_ten
+                if name not in person_data:
+                    person_data[name] = {
+                        'name': name,
+                        'detai_list': [],
+                        'sangkien_list': [],
+                        'tailieu_list': [],
+                        'hoi_dong_list': []
+                    }
+                tailieu = TaiLieu.query.get(item.tai_lieu_id)
+                if tailieu:
+                    person_data[name]['hoi_dong_list'].append({
+                        'loai_hoi_dong': 'HĐ Nghiệm thu Tài liệu',
+                        'ten': tailieu.ten_tai_lieu,
+                        'vai_tro': item.vai_tro,
+                        'url': url_for('main.tailieu_detail', id=tailieu.id)
+                    })
+            
+            # Tính toán thống kê
+            for name, data in person_data.items():
+                person_stats.append({
+                    'name': name,
+                    'detai_count': len(data['detai_list']),
+                    'sangkien_count': len(data['sangkien_list']),
+                    'tailieu_count': len(data['tailieu_list']),
+                    'hoi_dong_count': len(data['hoi_dong_list']),
+                    'total_participations': len(data['detai_list']) + len(data['sangkien_list']) + len(data['tailieu_list']) + len(data['hoi_dong_list']),
+                    'detai_list': data['detai_list'],
+                    'sangkien_list': data['sangkien_list'],
+                    'tailieu_list': data['tailieu_list'],
+                    'hoi_dong_list': data['hoi_dong_list']
+                })
+            
+            # Sắp xếp theo tổng số lần tham gia
+            person_stats.sort(key=lambda x: x['total_participations'], reverse=True)
         
         # ============= TÌM KIẾM TRONG FILE =============
-        if search_in_files:
+        elif search_type == 'file_content':
+            file_search_query = search_query
             upload_folder = os.path.join('static', 'uploads')
             
             # Tìm trong file đề tài
-            if search_type in ['all', 'detai']:
-                for detai in DeTai.query.all():
-                    files_to_check = []
-                    if detai.file_sau_sua:
-                        files_to_check.append(('Đề cương', detai.file_sau_sua))
-                    if detai.bien_ban_de_cuong:
-                        files_to_check.append(('Biên bản họp', detai.bien_ban_de_cuong))
-                    if detai.bien_ban_nghiem_thu:
-                        files_to_check.append(('Nghiệm thu', detai.bien_ban_nghiem_thu))
-                    
-                    for file_type, file_path in files_to_check:
-                        full_path = os.path.join(upload_folder, file_path)
-                        found, snippet = search_in_file(full_path, search_query)
-                        if found:
-                            results['file_matches'].append({
-                                'type': 'detai',
-                                'item': detai,
-                                'file_type': file_type,
-                                'file_path': file_path,
-                                'snippet': snippet,
-                                'title': detai.ten_de_tai,
-                                'code': detai.ma_de_tai,
-                                'url': url_for('main.detai_detail', id=detai.id)
-                            })
+            for detai in DeTai.query.all():
+                files_to_check = []
+                if detai.file_sau_sua:
+                    files_to_check.append(('Nội dung', detai.file_sau_sua))
+                # if detai.bien_ban_de_cuong:
+                #     files_to_check.append(('Biên bản họp', detai.bien_ban_de_cuong))
+                # if detai.bien_ban_nghiem_thu:
+                #     files_to_check.append(('Nghiệm thu', detai.bien_ban_nghiem_thu))
+                
+                for file_type, file_path in files_to_check:
+                    full_path = os.path.join(upload_folder, file_path)
+                    found, snippet = search_in_file(full_path, search_query)
+                    if found:
+                        results['file_matches'].append({
+                            'type': 'detai',
+                            'item': detai,
+                            'file_type': file_type,
+                            'file_path': file_path,
+                            'snippet': snippet,
+                            'title': detai.ten_de_tai,
+                            'code': detai.ma_de_tai,
+                            'url': url_for('main.detai_detail', id=detai.id)
+                        })
             
             # Tìm trong file sáng kiến
-            if search_type in ['all', 'sangkien']:
-                for sangkien in SangKien.query.all():
-                    files_to_check = []
-                    if sangkien.file_sau_sua:
-                        files_to_check.append(('Hồ sơ sáng kiến', sangkien.file_sau_sua))
-                    if sangkien.bien_ban_de_cuong:
-                        files_to_check.append(('Giấy chứng nhận', sangkien.bien_ban_de_cuong))
-                    if sangkien.bien_ban_nghiem_thu:
-                        files_to_check.append(('BC Ứng dụng', sangkien.bien_ban_nghiem_thu))
-                    
-                    for file_type, file_path in files_to_check:
-                        full_path = os.path.join(upload_folder, file_path)
-                        found, snippet = search_in_file(full_path, search_query)
-                        if found:
-                            results['file_matches'].append({
-                                'type': 'sangkien',
-                                'item': sangkien,
-                                'file_type': file_type,
-                                'file_path': file_path,
-                                'snippet': snippet,
-                                'title': sangkien.ten_sang_kien,
-                                'code': sangkien.ma_sang_kien,
-                                'url': url_for('main.sangkien_detail', id=sangkien.id)
-                            })
+            for sangkien in SangKien.query.all():
+                files_to_check = []
+                if sangkien.file_sau_sua:
+                    files_to_check.append(('Hồ sơ sáng kiến', sangkien.file_sau_sua))
+                if sangkien.bien_ban_de_cuong:
+                    files_to_check.append(('Giấy chứng nhận', sangkien.bien_ban_de_cuong))
+                if sangkien.bien_ban_nghiem_thu:
+                    files_to_check.append(('BC Ứng dụng', sangkien.bien_ban_nghiem_thu))
+                
+                for file_type, file_path in files_to_check:
+                    full_path = os.path.join(upload_folder, file_path)
+                    found, snippet = search_in_file(full_path, search_query)
+                    if found:
+                        results['file_matches'].append({
+                            'type': 'sangkien',
+                            'item': sangkien,
+                            'file_type': file_type,
+                            'file_path': file_path,
+                            'snippet': snippet,
+                            'title': sangkien.ten_sang_kien,
+                            'code': sangkien.ma_sang_kien,
+                            'url': url_for('main.sangkien_detail', id=sangkien.id)
+                        })
             
             # Tìm trong file tài liệu
+            for tailieu in TaiLieu.query.all():
+                files_to_check = []
+                if tailieu.file_sau_sua:
+                    files_to_check.append(('Tài liệu', tailieu.file_sau_sua))
+                if tailieu.bien_ban_ban:
+                    files_to_check.append(('BB Ban', tailieu.bien_ban_ban))
+                if tailieu.bien_ban_de_cuong:
+                    files_to_check.append(('BB Đề cương', tailieu.bien_ban_de_cuong))
+                if tailieu.bien_ban_nghiem_thu:
+                    files_to_check.append(('BB Nghiệm thu', tailieu.bien_ban_nghiem_thu))
+                
+                for file_type, file_path in files_to_check:
+                    full_path = os.path.join(upload_folder, file_path)
+                    found, snippet = search_in_file(full_path, search_query)
+                    if found:
+                        results['file_matches'].append({
+                            'type': 'tailieu',
+                            'item': tailieu,
+                            'file_type': file_type,
+                            'file_path': file_path,
+                            'snippet': snippet,
+                            'title': tailieu.ten_tai_lieu,
+                            'code': tailieu.ma_tai_lieu,
+                            'url': url_for('main.tailieu_detail', id=tailieu.id)
+                        })
+        
+        # ============= TÌM KIẾM THÔNG THƯỜNG =============
+        else:
+            # Tìm kiếm thông thường trong database
+            if search_type in ['all', 'detai']:
+                results['detai'] = DeTai.query.filter(
+                    db.or_(
+                        DeTai.ma_de_tai.ilike(f'%{search_query}%'),
+                        DeTai.ten_de_tai.ilike(f'%{search_query}%'),
+                        DeTai.chu_nhiem.ilike(f'%{search_query}%'),
+                    #     DeTai.ban_thanh_vien.ilike(f'%{search_query}%'),
+                        DeTai.mo_ta.ilike(f'%{search_query}%'),
+                        DeTai.don_vi.ilike(f'%{search_query}%')
+                    )
+                ).all()
+            
+            if search_type in ['all', 'sangkien']:
+                results['sangkien'] = SangKien.query.filter(
+                    db.or_(
+                        SangKien.ma_sang_kien.ilike(f'%{search_query}%'),
+                        SangKien.ten_sang_kien.ilike(f'%{search_query}%'),
+                        SangKien.chu_nhiem.ilike(f'%{search_query}%'),
+                    #   SangKien.ban_thanh_vien.ilike(f'%{search_query}%'),
+                        SangKien.mo_ta.ilike(f'%{search_query}%'),
+                        SangKien.don_vi.ilike(f'%{search_query}%')
+                    )
+                ).all()
+            
             if search_type in ['all', 'tailieu']:
-                for tailieu in TaiLieu.query.all():
-                    files_to_check = []
-                    if tailieu.file_sau_sua:
-                        files_to_check.append(('Tài liệu', tailieu.file_sau_sua))
-                    if tailieu.bien_ban_ban:
-                        files_to_check.append(('BB Ban', tailieu.bien_ban_ban))
-                    if tailieu.bien_ban_de_cuong:
-                        files_to_check.append(('BB Đề cương', tailieu.bien_ban_de_cuong))
-                    if tailieu.bien_ban_nghiem_thu:
-                        files_to_check.append(('BB Nghiệm thu', tailieu.bien_ban_nghiem_thu))
-                    
-                    for file_type, file_path in files_to_check:
-                        full_path = os.path.join(upload_folder, file_path)
-                        found, snippet = search_in_file(full_path, search_query)
-                        if found:
-                            results['file_matches'].append({
-                                'type': 'tailieu',
-                                'item': tailieu,
-                                'file_type': file_type,
-                                'file_path': file_path,
-                                'snippet': snippet,
-                                'title': tailieu.ten_tai_lieu,
-                                'code': tailieu.ma_tai_lieu,
-                                'url': url_for('main.tailieu_detail', id=tailieu.id)
-                            })
+                results['tailieu'] = TaiLieu.query.filter(
+                    db.or_(
+                        TaiLieu.ma_tai_lieu.ilike(f'%{search_query}%'),
+                        TaiLieu.ten_tai_lieu.ilike(f'%{search_query}%'),
+                        TaiLieu.tac_gia.ilike(f'%{search_query}%'),
+                        TaiLieu.mo_ta.ilike(f'%{search_query}%'),
+                        TaiLieu.don_vi.ilike(f'%{search_query}%')
+                    )
+                ).all()
+            
+            if search_type in ['all', 'tiemluc']:
+                results['tiemluc'] = TiemLuc.query.filter(
+                    db.or_(
+                        TiemLuc.ma_can_bo.ilike(f'%{search_query}%'),
+                        TiemLuc.ho_ten.ilike(f'%{search_query}%'),
+                        TiemLuc.don_vi.ilike(f'%{search_query}%'),
+                        TiemLuc.chuyen_mon.ilike(f'%{search_query}%'),
+                        TiemLuc.kinh_nghiem.ilike(f'%{search_query}%')
+                    )
+                ).all()
     
     return render_template('timkiem.html', 
                          search_query=search_query,
                          search_type=search_type,
-                         search_in_files=search_in_files,
-                         results=results)
+                         results=results,
+                         person_stats=person_stats,
+                         file_search_query=file_search_query)

@@ -25,8 +25,12 @@
             <div class="col-md-6">
                 <table class="table table-borderless">
                     <tr>
-                        <td style="width: 150px;"><strong><i class="fas fa-tags"></i> Loại:</strong></td>
+                        <td style="width: 180px;"><strong><i class="fas fa-tags"></i> Loại:</strong></td>
                         <td><span class="badge badge-info">{{ tailieu.loai or 'N/A' }}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-building"></i> Đơn vị:</strong></td>
+                        <td>{{ tailieu.don_vi or 'N/A' }}</td>
                     </tr>
                     <tr>
                         <td><strong><i class="fas fa-users"></i> Tác giả:</strong></td>
@@ -44,12 +48,20 @@
                             {% endif %}
                         </td>
                     </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-calendar-alt"></i> Ngày bắt đầu:</strong></td>
+                        <td>{{ tailieu.ngay_bat_dau.strftime('%d/%m/%Y') if tailieu.ngay_bat_dau else 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-calendar-check"></i> Ngày kết thúc:</strong></td>
+                        <td>{{ tailieu.ngay_ket_thuc.strftime('%d/%m/%Y') if tailieu.ngay_ket_thuc else 'N/A' }}</td>
+                    </tr>
                 </table>
             </div>
             <div class="col-md-6">
                 <table class="table table-borderless">
                     <tr>
-                        <td style="width: 150px;"><strong><i class="fas fa-tasks"></i> Trạng thái:</strong></td>
+                        <td style="width: 180px;"><strong><i class="fas fa-tasks"></i> Trạng thái:</strong></td>
                         <td>
                             {% if tailieu.trang_thai == 'Hoàn thành' %}
                                 <span class="badge badge-success">{{ tailieu.trang_thai }}</span>
@@ -64,9 +76,33 @@
                         <td><strong><i class="fas fa-trophy"></i> Kết quả:</strong></td>
                         <td>{{ tailieu.ket_qua or 'N/A' }}</td>
                     </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-calendar"></i> Năm:</strong></td>
+                        <td>{{ tailieu.nam or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-user-plus"></i> Người tạo:</strong></td>
+                        <td>{{ tailieu.nguoi_tao or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><i class="fas fa-clock"></i> Ngày tạo:</strong></td>
+                        <td>{{ tailieu.ngay_tao.strftime('%d/%m/%Y %H:%M') if tailieu.ngay_tao else 'N/A' }}</td>
+                    </tr>
                 </table>
             </div>
         </div>
+
+        <!-- Mô tả / Ghi chú -->
+        {% if tailieu.ghi_chu %}
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header bg-secondary text-white">
+                <strong><i class="fas fa-comment"></i> Ghi chú</strong>
+            </div>
+            <div class="card-body">
+                <p style="white-space: pre-wrap;">{{ tailieu.ghi_chu }}</p>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Ban tài liệu -->
         {% if ban_members %}
@@ -163,31 +199,35 @@
             <div class="card-body">
                 <div class="row">
                     {% if tailieu.file_tai_lieu %}
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3">
                         <a href="{{ url_for('static', filename='uploads/' + tailieu.file_tai_lieu) }}" target="_blank" class="btn btn-primary btn-block">
                             <i class="fas fa-file-pdf"></i> Tài liệu chính
                         </a>
+                        <small class="d-block mt-1 text-muted">{{ tailieu.file_tai_lieu }}</small>
                     </div>
                     {% endif %}
                     {% if tailieu.bien_ban_ban %}
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3">
                         <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_ban) }}" target="_blank" class="btn btn-secondary btn-block">
                             <i class="fas fa-file"></i> BB Ban
                         </a>
+                        <small class="d-block mt-1 text-muted">{{ tailieu.bien_ban_ban }}</small>
                     </div>
                     {% endif %}
                     {% if tailieu.bien_ban_de_cuong %}
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3">
                         <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_de_cuong) }}" target="_blank" class="btn btn-secondary btn-block">
                             <i class="fas fa-file"></i> BB Đề cương
                         </a>
+                        <small class="d-block mt-1 text-muted">{{ tailieu.bien_ban_de_cuong }}</small>
                     </div>
                     {% endif %}
                     {% if tailieu.bien_ban_nghiem_thu %}
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3">
                         <a href="{{ url_for('static', filename='uploads/' + tailieu.bien_ban_nghiem_thu) }}" target="_blank" class="btn btn-secondary btn-block">
                             <i class="fas fa-file"></i> BB Nghiệm thu
                         </a>
+                        <small class="d-block mt-1 text-muted">{{ tailieu.bien_ban_nghiem_thu }}</small>
                     </div>
                     {% endif %}
                     

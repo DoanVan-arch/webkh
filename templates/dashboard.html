@@ -150,7 +150,7 @@
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem;">
     <a href="{{ url_for('main.detai_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(44, 95, 45, 0.1), rgba(151, 184, 133, 0.1)); transition: transform 0.2s;">
+        <div class="card action-card" style="cursor: pointer; background: white; border: 2px solid var(--primary-color); transition: all 0.3s;">
             <div class="card-body" style="text-align: center;">
                 <i class="fas fa-plus-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
                 <h3 style="color: var(--primary-color); margin: 0;">Thêm đề tài</h3>
@@ -160,7 +160,7 @@
     </a>
 
     <a href="{{ url_for('main.sangkien_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1)); transition: transform 0.2s;">
+        <div class="card action-card" style="cursor: pointer; background: white; border: 2px solid var(--success-color); transition: all 0.3s;">
             <div class="card-body" style="text-align: center;">
                 <i class="fas fa-lightbulb" style="font-size: 3rem; color: var(--success-color); margin-bottom: 1rem;"></i>
                 <h3 style="color: var(--success-color); margin: 0;">Thêm sáng kiến</h3>
@@ -170,7 +170,7 @@
     </a>
 
     <a href="{{ url_for('main.giaotrinh_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(32, 201, 151, 0.1)); transition: transform 0.2s;">
+        <div class="card action-card" style="cursor: pointer; background: white; border: 2px solid var(--info-color); transition: all 0.3s;">
             <div class="card-body" style="text-align: center;">
                 <i class="fas fa-book-medical" style="font-size: 3rem; color: var(--info-color); margin-bottom: 1rem;"></i>
                 <h3 style="color: var(--info-color); margin: 0;">Thêm tài liệu</h3>
@@ -180,7 +180,7 @@
     </a>
 
     <a href="{{ url_for('main.tiemluc_add') }}" style="text-decoration: none;">
-        <div class="card" style="cursor: pointer; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(253, 126, 20, 0.1)); transition: transform 0.2s;">
+        <div class="card action-card" style="cursor: pointer; background: white; border: 2px solid var(--warning-color); transition: all 0.3s;">
             <div class="card-body" style="text-align: center;">
                 <i class="fas fa-user-plus" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
                 <h3 style="color: var(--warning-color); margin: 0;">Thêm cán bộ</h3>
@@ -194,6 +194,16 @@
 .card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.action-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.action-card:hover .fas {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
 }
 </style>
 {% endblock %}

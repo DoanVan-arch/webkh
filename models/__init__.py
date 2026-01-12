@@ -220,11 +220,11 @@ class SangKien(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+   
     creator = db.relationship('User', backref='sang_kien_created')
-    ban_thanh_vien = db.relationship('BanSangKien', backref='sang_kien', lazy=True, cascade='all, delete-orphan')
-    hoi_dong_de_cuong = db.relationship('HoiDongDeCuongSangKien', backref='sang_kien', lazy=True, cascade='all, delete-orphan')
-    hoi_dong_nghiem_thu = db.relationship('HoiDongNghiemThuSangKien', backref='sang_kien', lazy=True, cascade='all, delete-orphan')
+    ban_thanh_vien = db.relationship('BanSangKien', backref='sang_kien', lazy='dynamic', cascade='all, delete-orphan')
+    hoi_dong_de_cuong = db.relationship('HoiDongDeCuongSangKien', backref='sang_kien', lazy='dynamic', cascade='all, delete-orphan')
+    hoi_dong_nghiem_thu = db.relationship('HoiDongNghiemThuSangKien', backref='sang_kien', lazy='dynamic', cascade='all, delete-orphan')
 
 class BanSangKien(db.Model):
     """Model Ban sáng kiến"""

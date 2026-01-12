@@ -24,23 +24,70 @@
 </div>
 
 <div class="card">
-    <div class="card-header">
-        Danh sách tiềm lực khoa học ({{ pagination.total }} người)
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span id="resultCountText">Danh sách tiềm lực khoa học ({{ pagination.total }} người)</span>
+        <div>
+            <button onclick="toggleFilters()" class="btn btn-info btn-sm" id="toggleFiltersBtn" style="padding: 0.5rem 1rem; margin-right: 0.5rem; border-radius: 6px; font-weight: 500; transition: all 0.3s;">
+                <i class="fas fa-filter"></i> Hiện bộ lọc
+            </button>
+            <button onclick="resetFilters()" class="btn btn-danger btn-sm" id="resetFiltersBtn" style="padding: 0.5rem 1rem; display: none; border-radius: 6px; font-weight: 500; transition: all 0.3s;">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+        </div>
     </div>
     <div class="card-body">
         {% if pagination.items %}
-        <table class="table">
+        <table class="table" id="tiemlucTable">
             <thead>
-                <tr>
-                    <th>Mã cán bộ</th>
-                    <th>Họ tên</th>
-                    <th>Đơn vị</th>
-                    <th>Chức vụ</th>
-                    <th>Học vị</th>
-                    <th>Học hàm</th>
-                    <th>Chức danh</th>
-                    <th>Nhà giáo</th>
-                    <th>Thao tác</th>
+                <tr class="header-row">
+                    <th style="color: #2d3748;">Mã cán bộ</th>
+                    <th style="color: #2d3748;">Họ tên</th>
+                    <th style="color: #2d3748;">Đơn vị</th>
+                    <th style="color: #2d3748;">Chức vụ</th>
+                    <th style="color: #2d3748;">Học vị</th>
+                    <th style="color: #2d3748;">Học hàm</th>
+                    <th style="color: #2d3748;">Chức danh</th>
+                    <th style="color: #2d3748;">Nhà giáo</th>
+                    <th style="color: #2d3748;">Thao tác</th>
+                </tr>
+                <tr class="filter-row" style="display: none;">
+                    <th>
+                        <input type="text" class="column-filter" data-column="0" placeholder="🔍 Lọc mã...">
+                    </th>
+                    <th>
+                        <input type="text" class="column-filter" data-column="1" placeholder="🔍 Lọc tên...">
+                    </th>
+                    <th>
+                        <select class="column-filter" data-column="2">
+                            <option value="">📋 Tất cả</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select class="column-filter" data-column="3">
+                            <option value="">📋 Tất cả</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select class="column-filter" data-column="4">
+                            <option value="">📋 Tất cả</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select class="column-filter" data-column="5">
+                            <option value="">📋 Tất cả</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select class="column-filter" data-column="6">
+                            <option value="">📋 Tất cả</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select class="column-filter" data-column="7">
+                            <option value="">📋 Tất cả</option>
+                        </select>
+                    </th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -287,6 +334,116 @@
             transform: translateY(0);
         }
     }
+    
+    /* Column Filter Styles */
+    .filter-row {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .filter-row.show {
+        display: table-row !important;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    .filter-row th {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 2px solid #dee2e6;
+        box-shadow: inset 0 -2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .column-filter {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .column-filter:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1), 0 1px 3px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+    
+    .column-filter:hover {
+        border-color: #a0aec0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    
+    .column-filter::placeholder {
+        color: #a0aec0;
+        font-style: italic;
+    }
+    
+    select.column-filter {
+        cursor: pointer;
+        padding-right: 2rem;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234299e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 12px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+    
+    #tiemlucTable thead th {
+        vertical-align: middle;
+        padding: 0.75rem;
+    }
+    
+    .header-row th {
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    
+    .card-header {
+        font-weight: 600;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        color: white !important;
+        border-radius: 8px 8px 0 0 !important;
+    }
+    
+    #toggleFiltersBtn, #resetFiltersBtn {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #toggleFiltersBtn:hover, #resetFiltersBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    #toggleFiltersBtn:active, #resetFiltersBtn:active {
+        transform: translateY(0);
+    }
+    
+    #resultCountText {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .filter-count-badge {
+        display: inline-block;
+        background: #f5576c;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        margin-left: 0.5rem;
+        animation: pulse 0.5s ease;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
     </style>
     
     <script>
@@ -315,11 +472,156 @@
         }
     }
     
+    function toggleFilters() {
+        const filterRow = document.querySelector('.filter-row');
+        const btn = document.getElementById('toggleFiltersBtn');
+        const resetBtn = document.getElementById('resetFiltersBtn');
+        
+        if (filterRow.style.display === 'none' || !filterRow.classList.contains('show')) {
+            filterRow.style.display = 'table-row';
+            filterRow.classList.add('show');
+            btn.innerHTML = '<i class="fas fa-filter"></i> Ẩn bộ lọc';
+            btn.classList.remove('btn-info');
+            btn.classList.add('btn-warning');
+            resetBtn.style.display = 'inline-block';
+            
+            localStorage.setItem('showTiemlucFilters', 'true');
+        } else {
+            filterRow.style.display = 'none';
+            filterRow.classList.remove('show');
+            btn.innerHTML = '<i class="fas fa-filter"></i> Hiện bộ lọc';
+            btn.classList.remove('btn-warning');
+            btn.classList.add('btn-info');
+            resetBtn.style.display = 'none';
+            
+            localStorage.setItem('showTiemlucFilters', 'false');
+        }
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
         const showStats = localStorage.getItem('showTiemlucStats');
         if (showStats === 'true') {
             toggleStats();
         }
+        
+        // Mặc định ẩn bộ lọc - không kiểm tra localStorage
+        // const showFilters = localStorage.getItem('showTiemlucFilters');
+        // if (showFilters === 'true') {
+        //     toggleFilters();
+        // }
+        
+        // Khởi tạo bộ lọc cột
+        initColumnFilters();
     });
+    
+    function initColumnFilters() {
+        const table = document.getElementById('tiemlucTable');
+        if (!table) return;
+        
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        // Thu thập giá trị unique cho mỗi cột select
+        const selectColumns = [2, 3, 4, 5, 6, 7]; // Đơn vị, Chức vụ, Học vị, Học hàm, Chức danh, Nhà giáo
+        
+        selectColumns.forEach(colIndex => {
+            const values = new Set();
+            rows.forEach(row => {
+                const cell = row.cells[colIndex];
+                if (cell) {
+                    let text = cell.textContent.trim();
+                    if (text && text !== 'N/A') {
+                        values.add(text);
+                    }
+                }
+            });
+            
+            const select = document.querySelector(`select.column-filter[data-column="${colIndex}"]`);
+            if (select) {
+                Array.from(values).sort().forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+            }
+        });
+        
+        // Thêm event listeners
+        const filters = document.querySelectorAll('.column-filter');
+        filters.forEach(filter => {
+            filter.addEventListener('input', applyFilters);
+            filter.addEventListener('change', applyFilters);
+        });
+    }
+    
+    function applyFilters() {
+        const table = document.getElementById('tiemlucTable');
+        if (!table) return;
+        
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const filters = document.querySelectorAll('.column-filter');
+        
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            let show = true;
+            
+            filters.forEach(filter => {
+                const colIndex = parseInt(filter.getAttribute('data-column'));
+                const filterValue = filter.value.toLowerCase().trim();
+                
+                if (filterValue) {
+                    const cell = row.cells[colIndex];
+                    if (cell) {
+                        const cellText = cell.textContent.toLowerCase().trim();
+                        
+                        if (filter.tagName === 'SELECT') {
+                            if (!cellText.includes(filterValue.toLowerCase())) {
+                                show = false;
+                            }
+                        } else {
+                            if (!cellText.includes(filterValue)) {
+                                show = false;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            if (show) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        updateResultCount(visibleCount, rows.length);
+    }
+    
+    function updateResultCount(visible, total) {
+        const resultText = document.getElementById('resultCountText');
+        if (resultText) {
+            if (visible < total) {
+                resultText.innerHTML = `Danh sách tiềm lực khoa học ({{ pagination.total }} người) <span class="filter-count-badge">Lọc: ${visible}/${total}</span>`;
+            } else {
+                resultText.innerHTML = 'Danh sách tiềm lực khoa học ({{ pagination.total }} người)';
+            }
+        }
+    }
+    
+    function resetFilters() {
+        const filters = document.querySelectorAll('.column-filter');
+        filters.forEach(filter => {
+            if (filter.tagName === 'SELECT') {
+                filter.selectedIndex = 0;
+            } else {
+                filter.value = '';
+            }
+        });
+        applyFilters();
+    }
     </script>
 {% endblock %}

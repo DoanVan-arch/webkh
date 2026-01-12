@@ -68,8 +68,8 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td><strong><i class="fas fa-map-marker-alt"></i> Quê quán:</strong></td>
-                                <td>{{ tiemluc.que_quan or 'N/A' }}</td>
+                                <td><strong><i class="fas fa-user-tie"></i> Chức vụ:</strong></td>
+                                <td>{{ tiemluc.chuc_vu or 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td><strong><i class="fas fa-phone"></i> Điện thoại:</strong></td>
@@ -130,16 +130,32 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td><strong><i class="fas fa-user-tie"></i> Chức danh:</strong></td>
-                                <td>{{ tiemluc.chuc_danh or 'N/A' }}</td>
+                                <td><strong><i class="fas fa-briefcase"></i> Chức danh:</strong></td>
+                                <td>
+                                    {% if tiemluc.chuc_danh %}
+                                        <span class="badge badge-info" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            {{ tiemluc.chuc_danh }}
+                                        </span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
                             </tr>
                             <tr>
-                                <td><strong><i class="fas fa-book"></i> Chuyên ngành:</strong></td>
-                                <td>{{ tiemluc.chuyen_nganh or 'N/A' }}</td>
+                                <td><strong><i class="fas fa-chalkboard-teacher"></i> Nhà giáo:</strong></td>
+                                <td>
+                                    {% if tiemluc.nha_giao %}
+                                        <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.4rem 0.8rem;">
+                                            {{ tiemluc.nha_giao }}
+                                        </span>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
                             </tr>
                             <tr>
-                                <td><strong><i class="fas fa-briefcase"></i> Vị trí công việc:</strong></td>
-                                <td>{{ tiemluc.vi_tri_cong_viec or 'N/A' }}</td>
+                                <td><strong><i class="fas fa-book"></i> Chuyên môn:</strong></td>
+                                <td>{{ tiemluc.chuyen_mon or 'N/A' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -147,81 +163,39 @@
             </div>
         </div>
 
-        <!-- Kinh nghiệm nghiên cứu -->
-        {% if tiemluc.kinh_nghiem_nghien_cuu %}
+        <!-- Kinh nghiệm -->
+        {% if tiemluc.kinh_nghiem %}
         <div class="card mb-3" style="border-left: 4px solid #667eea;">
             <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <strong><i class="fas fa-flask"></i> Kinh nghiệm nghiên cứu</strong>
+                <strong><i class="fas fa-briefcase"></i> Kinh nghiệm</strong>
             </div>
             <div class="card-body" style="white-space: pre-line;">
-                {{ tiemluc.kinh_nghiem_nghien_cuu }}
+                {{ tiemluc.kinh_nghiem }}
             </div>
         </div>
         {% endif %}
-         
         
-        <!-- Ghi chú -->
-        {% if tiemluc.ghi_chu %}
-        <div class="card mb-3" style="border-left: 4px solid #9e9e9e;">
-            <div class="card-header bg-light">
-                <strong><i class="fas fa-sticky-note"></i> Ghi chú</strong>
+        <!-- Thành tích -->
+        {% if tiemluc.thanh_tich %}
+        <div class="card mb-3" style="border-left: 4px solid #f093fb;">
+            <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <strong><i class="fas fa-trophy"></i> Thành tích</strong>
             </div>
             <div class="card-body" style="white-space: pre-line;">
-                {{ tiemluc.ghi_chu }}
+                {{ tiemluc.thanh_tich }}
             </div>
         </div>
         {% endif %}
 
-        <!-- Files đính kèm -->
-        <div class="card" style="border-left: 4px solid #00d2ff;">
-            <div class="card-header" style="background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); color: white;">
-                <strong><i class="fas fa-paperclip"></i> Tài liệu đính kèm</strong>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {% if tiemluc.cv_ca_nhan %}
-                    <div class="col-md-4 mb-3">
-                        <a href="{{ url_for('static', filename='uploads/' + tiemluc.cv_ca_nhan) }}" target="_blank" 
-                           class="btn btn-primary btn-block" style="padding: 1rem;">
-                            <i class="fas fa-file-pdf" style="font-size: 1.5rem;"></i>
-                            <div style="margin-top: 0.5rem;">CV Cá nhân</div>
-                        </a>
-                    </div>
-                    {% endif %}
-                    {% if tiemluc.bang_cap %}
-                    <div class="col-md-4 mb-3">
-                        <a href="{{ url_for('static', filename='uploads/' + tiemluc.bang_cap) }}" target="_blank" 
-                           class="btn btn-success btn-block" style="padding: 1rem;">
-                            <i class="fas fa-certificate" style="font-size: 1.5rem;"></i>
-                            <div style="margin-top: 0.5rem;">Bằng cấp</div>
-                        </a>
-                    </div>
-                    {% endif %}
-                    {% if tiemluc.chung_chi %}
-                    <div class="col-md-4 mb-3">
-                        <a href="{{ url_for('static', filename='uploads/' + tiemluc.chung_chi) }}" target="_blank" 
-                           class="btn btn-warning btn-block" style="padding: 1rem;">
-                            <i class="fas fa-award" style="font-size: 1.5rem;"></i>
-                            <div style="margin-top: 0.5rem;">Chứng chỉ</div>
-                        </a>
-                    </div>
-                    {% endif %}
-                    
-                    {% if not tiemluc.cv_ca_nhan and not tiemluc.bang_cap and not tiemluc.chung_chi %}
-                    <div class="col-12">
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i> Chưa có file đính kèm
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
+      
         <!-- Thông tin hệ thống -->
         <div class="card mt-3" style="background-color: #f8f9fa;">
             <div class="card-body">
                 <small class="text-muted">
+                    {% if tiemluc.creator %}
+                        <i class="fas fa-user"></i> Tạo bởi: <strong>{{ tiemluc.creator.username }}</strong>
+                        | 
+                    {% endif %}
                     <i class="fas fa-clock"></i> Tạo lúc: {{ tiemluc.created_at.strftime('%d/%m/%Y %H:%M') if tiemluc.created_at else 'N/A' }}
                     {% if tiemluc.updated_at %}
                         | <i class="fas fa-edit"></i> Cập nhật: {{ tiemluc.updated_at.strftime('%d/%m/%Y %H:%M') }}

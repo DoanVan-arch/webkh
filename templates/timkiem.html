@@ -245,6 +245,229 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+#toggleFileSearchBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#toggleFileSearchBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+#toggleFileSearchBtn:active {
+    transform: translateY(0);
+}
+
+#toggleFileSearchBtn i {
+    transition: transform 0.3s ease;
+}
+
+#toggleFileSearchBtn.active i {
+    transform: rotate(180deg);
+}
+
+.file-types-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+#fileSearchContainer {
+    transition: all 0.4s ease;
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+
+.file-search-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+    border: 2px solid #667eea;
+    animation: slideDown 0.4s ease-out;
+}
+
+.file-search-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    color: #2d3748;
+}
+
+.header-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+    color: white;
+}
+
+.header-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.header-content p {
+    margin: 0;
+    color: #718096;
+    font-size: 1rem;
+}
+
+.file-search-input-wrapper {
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.file-search-input-wrapper:focus-within {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon-wrapper {
+    padding-left: 0.75rem;
+    color: #667eea;
+    font-size: 1.25rem;
+}
+
+.file-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    padding: 0.75rem 0.5rem;
+    background: transparent;
+}
+
+.file-search-input::placeholder {
+    color: #a0aec0;
+}
+
+.file-search-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.875rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.file-search-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.file-search-btn:active {
+    transform: translateY(0);
+}
+
+.file-search-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+
+.info-item i {
+    font-size: 1.25rem;
+    color: #667eea;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .file-search-card {
+        padding: 1.5rem;
+    }
+    
+    .file-search-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .header-content h3 {
+        font-size: 1.25rem;
+    }
+    
+    .file-search-input-wrapper {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .file-search-input {
+        width: 100%;
+    }
+    
+    .file-search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .file-search-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -256,7 +479,7 @@
     <p style="color: #666; font-size: 1.1rem;">Tìm kiếm đề tài, sáng kiến, tài liệu, tiềm lực khoa học</p>
 </div>
 
-<div class="search-container">
+<div class="search-container" id="basicSearchContainer">
     <form method="GET" action="{{ url_for('main.timkiem') }}" id="searchForm">
         <div class="search-input-group">
             <input type="text" 
@@ -270,29 +493,12 @@
             </button>
         </div>
 
-        <!-- Tùy chọn tìm kiếm -->
-        <div class="search-options">
-            <div class="search-option">
-                <input type="checkbox" 
-                       id="searchInFiles" 
-                       name="search_files" 
-                       value="1"
-                       {% if search_in_files %}checked{% endif %}
-                       onchange="document.getElementById('searchForm').submit()">
-                <label for="searchInFiles">
-                    <i class="fas fa-file-word"></i> Tìm kiếm trong nội dung file (DOCX, PDF)
-                </label>
-            </div>
-            {% if search_in_files %}
-            <span class="file-search-badge">
-                <i class="fas fa-magic"></i> Chế độ tìm kiếm nâng cao
-            </span>
-            {% endif %}
-        </div>
-
         <div class="search-type-tabs">
             <button type="button" class="tab-button {% if search_type == 'all' %}active{% endif %}" onclick="setSearchType('all')">
                 <i class="fas fa-th"></i> Tất cả
+            </button>
+            <button type="button" class="tab-button {% if search_type == 'person' %}active{% endif %}" onclick="setSearchType('person')">
+                <i class="fas fa-user-tie"></i> Tìm theo tên người
             </button>
             <button type="button" class="tab-button {% if search_type == 'detai' %}active{% endif %}" onclick="setSearchType('detai')">
                 <i class="fas fa-project-diagram"></i> Đề tài
@@ -311,6 +517,63 @@
     </form>
 </div>
 
+<!-- Nút ẩn/hiện tìm kiếm file -->
+<div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem;">
+    <button onclick="toggleFileSearch()" id="toggleFileSearchBtn">
+        <i class="fas fa-chevron-down"></i> 
+        <span id="toggleBtnText">Hiện tìm kiếm trong nội dung file</span>
+        <span class="file-types-badge">DOCX • PDF</span>
+    </button>
+</div>
+
+<!-- Tìm kiếm trong nội dung file - Phần riêng biệt -->
+<div id="fileSearchContainer" style="display: none;">
+    <div class="file-search-card">
+        <div class="file-search-header">
+            <div class="header-icon">
+                <i class="fas fa-file-search"></i>
+            </div>
+            <div class="header-content">
+                <h3>Tìm kiếm trong nội dung file</h3>
+                <p>Quét và tìm kiếm văn bản bên trong tài liệu đã upload</p>
+            </div>
+        </div>
+        
+        <form method="GET" action="{{ url_for('main.timkiem') }}" id="fileSearchForm">
+            <div class="file-search-input-wrapper">
+                <div class="search-icon-wrapper">
+                    <i class="fas fa-search"></i>
+                </div>
+                <input type="text" 
+                       name="q" 
+                       class="file-search-input" 
+                       placeholder="Nhập từ khóa để tìm trong nội dung file..." 
+                       value="{{ file_search_query }}">
+                <button type="submit" class="file-search-btn">
+                    <i class="fas fa-file-search"></i>
+                    <span>Tìm kiếm</span>
+                </button>
+            </div>
+            <input type="hidden" name="type" value="file_content">
+            
+            <div class="file-search-info">
+                <div class="info-item">
+                    <i class="fas fa-file-word"></i>
+                    <span>Hỗ trợ file DOCX</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Hỗ trợ file PDF</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-bolt"></i>
+                    <span>Tìm kiếm nhanh</span>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Loading spinner -->
 <div class="loading-spinner" id="loadingSpinner">
     <div class="spinner"></div>
@@ -318,6 +581,136 @@
 </div>
 
 {% if search_query %}
+
+<!-- Kết quả tìm theo tên người -->
+{% if person_stats %}
+<div class="result-section">
+    <h2 style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem;">
+        <i class="fas fa-user-tie"></i> Thống kê theo tên người
+        <span class="result-count">({{ person_stats|length }} người)</span>
+    </h2>
+    {% for person in person_stats %}
+    <div class="result-item person-stats" style="border-left-color: #ff6b6b;">
+        <div class="result-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fas fa-user"></i> {{ person.name }}</span>
+            <span class="badge badge-info">Tổng: {{ person.total_participations }} lần</span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+            <!-- Tham gia hội đồng -->
+            <div class="stat-box" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); padding: 1rem; border-radius: 8px; border-left: 3px solid #667eea;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #667eea; font-size: 0.9rem;">
+                    <i class="fas fa-users"></i> Hội đồng
+                </h4>
+                <p style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #667eea;">{{ person.hoi_dong_count }}</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #666;">lần tham gia</p>
+            </div>
+            
+            <!-- Tham gia đề tài -->
+            <div class="stat-box" style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.1)); padding: 1rem; border-radius: 8px; border-left: 3px solid #34d399;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #34d399; font-size: 0.9rem;">
+                    <i class="fas fa-project-diagram"></i> Đề tài
+                </h4>
+                <p style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #34d399;">{{ person.detai_count }}</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #666;">đề tài</p>
+            </div>
+            
+            <!-- Tham gia sáng kiến -->
+            <div class="stat-box" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(249, 115, 22, 0.1)); padding: 1rem; border-radius: 8px; border-left: 3px solid #fb923c;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #fb923c; font-size: 0.9rem;">
+                    <i class="fas fa-lightbulb"></i> Sáng kiến
+                </h4>
+                <p style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #fb923c;">{{ person.sangkien_count }}</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #666;">sáng kiến</p>
+            </div>
+            
+            <!-- Tham gia tài liệu -->
+            <div class="stat-box" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1)); padding: 1rem; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #3b82f6; font-size: 0.9rem;">
+                    <i class="fas fa-book"></i> Tài liệu
+                </h4>
+                <p style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #3b82f6;">{{ person.tailieu_count }}</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #666;">tài liệu</p>
+            </div>
+        </div>
+        
+        <!-- Chi tiết danh sách -->
+        <div style="margin-top: 1rem;">
+            <button class="btn btn-info" onclick="toggleDetails('person-{{ loop.index }}')" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                <i class="fas fa-list"></i> Xem chi tiết danh sách
+            </button>
+        </div>
+        
+        <div id="person-{{ loop.index }}" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;">
+            {% if person.detai_list %}
+            <div style="margin-bottom: 1rem;">
+                <h5 style="color: #34d399; margin-bottom: 0.5rem;"><i class="fas fa-project-diagram"></i> Đề tài ({{ person.detai_list|length }})</h5>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #555;">
+                    {% for item in person.detai_list %}
+                    <li style="margin: 0.25rem 0;">
+                        <a href="{{ url_for('main.detai_detail', id=item.id) }}" style="color: #667eea; text-decoration: none;">
+                            {{ item.ten_de_tai }}
+                        </a>
+                        <span style="color: #999; font-size: 0.85rem;">({{ item.vai_tro }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if person.sangkien_list %}
+            <div style="margin-bottom: 1rem;">
+                <h5 style="color: #fb923c; margin-bottom: 0.5rem;"><i class="fas fa-lightbulb"></i> Sáng kiến ({{ person.sangkien_list|length }})</h5>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #555;">
+                    {% for item in person.sangkien_list %}
+                    <li style="margin: 0.25rem 0;">
+                        <a href="{{ url_for('main.sangkien_detail', id=item.id) }}" style="color: #fb923c; text-decoration: none;">
+                            {{ item.ten_sang_kien }}
+                        </a>
+                        <span style="color: #999; font-size: 0.85rem;">({{ item.vai_tro }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if person.tailieu_list %}
+            <div style="margin-bottom: 1rem;">
+                <h5 style="color: #3b82f6; margin-bottom: 0.5rem;"><i class="fas fa-book"></i> Tài liệu ({{ person.tailieu_list|length }})</h5>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #555;">
+                    {% for item in person.tailieu_list %}
+                    <li style="margin: 0.25rem 0;">
+                        <a href="{{ url_for('main.tailieu_detail', id=item.id) }}" style="color: #3b82f6; text-decoration: none;">
+                            {{ item.ten_tai_lieu }}
+                        </a>
+                        <span style="color: #999; font-size: 0.85rem;">({{ item.vai_tro }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if person.hoi_dong_list %}
+            <div style="margin-bottom: 1rem;">
+                <h5 style="color: #667eea; margin-bottom: 0.5rem;"><i class="fas fa-users"></i> Hội đồng ({{ person.hoi_dong_list|length }})</h5>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #555;">
+                    {% for item in person.hoi_dong_list %}
+                    <li style="margin: 0.25rem 0;">
+                        <strong style="color: #667eea;">{{ item.loai_hoi_dong }}:</strong>
+                        <a href="{{ item.url }}" style="color: #667eea; text-decoration: none;">
+                            {{ item.ten }}
+                        </a>
+                        <span style="color: #999; font-size: 0.85rem;">({{ item.vai_tro }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 <!-- Kết quả tìm trong file -->
 {% if results.file_matches %}
@@ -501,7 +894,7 @@
 {% endif %}
 
 <!-- Không có kết quả -->
-{% if not results.detai and not results.sangkien and not results.tailieu and not results.tiemluc and not results.file_matches %}
+{% if not results.detai and not results.sangkien and not results.tailieu and not results.tiemluc and not results.file_matches and not person_stats %}
 <div class="no-results">
     <i class="fas fa-search"></i>
     <h3>Không tìm thấy kết quả nào</h3>
@@ -522,7 +915,8 @@
         <li>Tìm kiếm theo tên tác giả, chủ nhiệm đề tài</li>
         <li>Tìm kiếm theo đơn vị, chuyên môn</li>
         <li>Sử dụng các tab để lọc theo loại: Đề tài, Sáng kiến, Tài liệu, Tiềm lực</li>
-        <li><strong>MỚI:</strong> Bật "Tìm kiếm trong nội dung file" để tìm trong file DOCX, PDF đã upload</li>
+        <li><strong>MỚI:</strong> Tab "Tìm theo tên người" để xem thống kê chi tiết: số lần tham gia hội đồng, đề tài, sáng kiến, tài liệu</li>
+        <li><strong>MỚI:</strong> Ô tìm kiếm riêng "Tìm kiếm trong nội dung file" để quét nội dung bên trong file DOCX, PDF đã upload</li>
     </ul>
 </div>
 
@@ -544,16 +938,83 @@ function setSearchType(type) {
     }
 }
 
-// Show loading khi search trong file
-document.getElementById('searchForm').addEventListener('submit', function(e) {
-    const searchInFiles = document.getElementById('searchInFiles').checked;
-    if (searchInFiles) {
-        document.getElementById('loadingSpinner').classList.add('active');
+function toggleDetails(id) {
+    const element = document.getElementById(id);
+    const btn = event.target;
+    if (element.style.display === 'none') {
+        element.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-chevron-up"></i> Ẩn chi tiết';
+    } else {
+        element.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-list"></i> Xem chi tiết danh sách';
     }
-});
+}
+
+function toggleFileSearch() {
+    const fileContainer = document.getElementById('fileSearchContainer');
+    const basicContainer = document.getElementById('basicSearchContainer');
+    const btn = document.getElementById('toggleFileSearchBtn');
+    const btnText = document.getElementById('toggleBtnText');
+    const icon = btn.querySelector('i');
+    
+    if (fileContainer.style.display === 'none' || fileContainer.style.display === '') {
+        // Hiện file search, ẩn basic search
+        fileContainer.style.display = 'block';
+        basicContainer.style.display = 'none';
+        btnText.textContent = 'Ẩn tìm kiếm trong nội dung file';
+        icon.className = 'fas fa-chevron-up';
+        btn.classList.add('active');
+        
+        // Save state
+        localStorage.setItem('showFileSearchContainer', 'true');
+        
+        // Smooth scroll
+        setTimeout(() => {
+            fileContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    } else {
+        // Ẩn file search, hiện basic search
+        fileContainer.style.display = 'none';
+        basicContainer.style.display = 'block';
+        btnText.textContent = 'Hiện tìm kiếm trong nội dung file';
+        icon.className = 'fas fa-chevron-down';
+        btn.classList.remove('active');
+        
+        // Save state
+        localStorage.setItem('showFileSearchContainer', 'false');
+    }
+}
+
+// Show loading spinner when file search form is submitted
+const fileSearchFormElement = document.getElementById('fileSearchForm');
+if (fileSearchFormElement) {
+    fileSearchFormElement.addEventListener('submit', function(e) {
+        const fileQuery = this.querySelector('input[name="q"]').value.trim();
+        if (fileQuery) {
+            document.getElementById('loadingSpinner').classList.add('active');
+        }
+    });
+}
 
 // Highlight từ khóa trong kết quả
 document.addEventListener('DOMContentLoaded', function() {
+    // Tự động hiện file search nếu có file_search_query
+    const fileSearchQuery = "{{ file_search_query }}";
+    if (fileSearchQuery) {
+        const fileContainer = document.getElementById('fileSearchContainer');
+        const basicContainer = document.getElementById('basicSearchContainer');
+        const btn = document.getElementById('toggleFileSearchBtn');
+        const btnText = document.getElementById('toggleBtnText');
+        const icon = btn.querySelector('i');
+        
+        // Hiện file search, ẩn basic search
+        fileContainer.style.display = 'block';
+        basicContainer.style.display = 'none';
+        btnText.textContent = 'Ẩn tìm kiếm trong nội dung file';
+        icon.className = 'fas fa-chevron-up';
+        btn.classList.add('active');
+    }
+    
     const searchQuery = "{{ search_query }}".toLowerCase();
     if (searchQuery) {
         const resultItems = document.querySelectorAll('.result-title, .result-description, .file-snippet');
