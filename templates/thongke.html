@@ -559,6 +559,192 @@
     </div>
 </div>
 
+<!-- MỚI: Top 10 người tham gia nhiều đề tài/sáng kiến/hội đồng -->
+<div class="chart-row">
+    <!-- Top 10 người tham gia nhiều đề tài -->
+    <div class="chart-container">
+        <h3><i class="fas fa-user-tie"></i> Top 10 người tham gia nhiều đề tài nhất</h3>
+        <div style="margin-top: 1rem;">
+            {% if top_detai_participants %}
+                {% for item in top_detai_participants %}
+                <div style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: linear-gradient(90deg, 
+                    {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %}15, transparent); 
+                    border-left: 4px solid {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %}; 
+                    border-radius: 8px;">
+                    <div style="width: 40px; height: 40px; background: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %}; 
+                        color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin-right: 1rem;">
+                        {{ loop.index }}
+                    </div>
+                    <div style="flex: 1;">
+                        <strong style="font-size: 1.05rem;">{{ item.ho_ten }}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.5rem; font-weight: bold; color: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#667eea{% endif %};">
+                            {{ item.total }}
+                        </span>
+                        <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">đề tài</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #999; padding: 2rem;">Chưa có dữ liệu</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top 10 người tham gia nhiều sáng kiến -->
+    <div class="chart-container">
+        <h3><i class="fas fa-lightbulb"></i> Top 10 người tham gia nhiều sáng kiến nhất</h3>
+        <div style="margin-top: 1rem;">
+            {% if top_sangkien_participants %}
+                {% for item in top_sangkien_participants %}
+                <div style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: linear-gradient(90deg, 
+                    {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %}15, transparent); 
+                    border-left: 4px solid {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %}; 
+                    border-radius: 8px;">
+                    <div style="width: 40px; height: 40px; background: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %}; 
+                        color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin-right: 1rem;">
+                        {{ loop.index }}
+                    </div>
+                    <div style="flex: 1;">
+                        <strong style="font-size: 1.05rem;">{{ item.ho_ten }}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.5rem; font-weight: bold; color: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#f5576c{% endif %};">
+                            {{ item.total }}
+                        </span>
+                        <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">sáng kiến</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #999; padding: 2rem;">Chưa có dữ liệu</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Top 10 người tham gia nhiều tài liệu -->
+    <div class="chart-container">
+        <h3><i class="fas fa-book"></i> Top 10 người tham gia nhiều tài liệu nhất</h3>
+        <div style="margin-top: 1rem;">
+            {% if top_tailieu_participants %}
+                {% for item in top_tailieu_participants %}
+                <div style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: linear-gradient(90deg, 
+                    {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#00d2ff{% endif %}15, transparent); 
+                    border-left: 4px solid {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#00d2ff{% endif %}; 
+                    border-radius: 8px;">
+                    <div style="width: 40px; height: 40px; background: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#00d2ff{% endif %}; 
+                        color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin-right: 1rem;">
+                        {{ loop.index }}
+                    </div>
+                    <div style="flex: 1;">
+                        <strong style="font-size: 1.05rem;">{{ item.ho_ten }}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.5rem; font-weight: bold; color: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#00d2ff{% endif %};">
+                            {{ item.total }}
+                        </span>
+                        <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">tài liệu</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #999; padding: 2rem;">Chưa có dữ liệu</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Top 10 người tham gia hội đồng nhiều nhất -->
+<div class="chart-container">
+    <h3><i class="fas fa-users"></i> Top 10 người tham gia hội đồng nhiều nhất</h3>
+    <div style="margin-top: 1rem;">
+        {% if top_hoidong_participants %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem;">
+                {% for item in top_hoidong_participants %}
+                <div style="display: flex; align-items: center; padding: 0.75rem; background: linear-gradient(90deg, 
+                    {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#4facfe{% endif %}15, transparent); 
+                    border-left: 4px solid {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#4facfe{% endif %}; 
+                    border-radius: 8px;">
+                    <div style="width: 35px; height: 35px; background: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#4facfe{% endif %}; 
+                        color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; margin-right: 1rem;">
+                        {{ loop.index }}
+                    </div>
+                    <div style="flex: 1;">
+                        <strong style="font-size: 1rem;">{{ item.ho_ten }}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.3rem; font-weight: bold; color: {% if loop.index == 1 %}#FFD700{% elif loop.index == 2 %}#C0C0C0{% elif loop.index == 3 %}#CD7F32{% else %}#4facfe{% endif %};">
+                            {{ item.total }}
+                        </span>
+                        <span style="font-size: 0.85rem; color: #666; margin-left: 0.5rem;">lần</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">Chưa có dữ liệu</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MỚI: Thống kê tiềm lực theo chức danh và đơn vị -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-sitemap"></i> Thống kê tiềm lực theo chức danh từng đơn vị
+    </div>
+    <div class="card-body">
+        {% if tiemluc_by_donvi_chucdanh %}
+            {% for don_vi, chuc_danh_list in tiemluc_by_donvi_chucdanh.items() %}
+            <div style="margin-bottom: 2rem;">
+                <h4 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                    <i class="fas fa-building"></i> {{ don_vi }}
+                </h4>
+                <div class="table-wrapper">
+                    <table class="stat-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Chức danh</th>
+                                <th>Số lượng</th>
+                                <th>Tỷ lệ trong đơn vị (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_in_unit = chuc_danh_list | sum(attribute='total') %}
+                            {% for item in chuc_danh_list %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong>{{ item.chuc_danh }}</strong></td>
+                                <td>
+                                    <span class="badge badge-primary">{{ item.total }}</span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="flex: 1; background: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden;">
+                                            <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: {{ (item.total / total_in_unit * 100)|round(1) }}%; transition: width 0.3s;"></div>
+                                        </div>
+                                        <span style="font-weight: bold; min-width: 50px; text-align: right;">{{ "%.1f"|format(item.total / total_in_unit * 100) }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background: #f0f0f0; font-weight: bold;">
+                                <td colspan="2">TỔNG {{ don_vi }}</td>
+                                <td><span class="badge badge-success">{{ total_in_unit }}</span></td>
+                                <td>100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">Chưa có dữ liệu</p>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}

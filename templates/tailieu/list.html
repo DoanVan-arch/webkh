@@ -3,13 +3,17 @@
 {% block title %}Danh sách giáo trình - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h1 style="color: var(--primary-color);">
-        <i class="fas fa-book"></i> Quản lý Giáo trình & Tài liệu
-    </h1>
-    <a href="{{ url_for('main.tailieu_add') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Thêm tài liệu mới
-    </a>
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h1 style="color: var(--primary-color); margin: 0;">
+            <i class="fas fa-book"></i> 
+            <span class="desktop-only">Quản lý Giáo trình & Tài liệu</span>
+            <span class="mobile-only">Tài liệu</span>
+        </h1>
+        <a href="{{ url_for('main.tailieu_add') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> <span class="desktop-only">Thêm tài liệu mới</span><span class="mobile-only">Thêm</span>
+        </a>
+    </div>
 </div>
 
 <div class="card">
@@ -37,7 +41,7 @@
     </div>
     <div class="card-body">
         {% if pagination.items %}
-        <div style="overflow-x: auto;">
+        <div class="table-wrapper">
         <table class="table" id="tailieuTable">
             <thead>
                 <tr class="header-row">
@@ -346,7 +350,7 @@ select.column-filter {
 
 .card-header {
     font-weight: 600;
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+    background: linear-gradient(135deg, #1a4d1b 0%, #1a4d1b 100%) !important;
     color: white !important;
     border-radius: 8px 8px 0 0 !important;
 }

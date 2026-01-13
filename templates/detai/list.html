@@ -3,13 +3,17 @@
 {% block title %}Danh sách đề tài - Hệ thống Quản lý Khoa học Quân sự{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h1 style="color: var(--primary-color);">
-        <i class="fas fa-project-diagram"></i> Quản lý Đề tài Nghiên cứu
-    </h1>
-    <a href="{{ url_for('main.detai_add') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Thêm đề tài mới
-    </a>
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h1 style="color: var(--primary-color); margin: 0;">
+            <i class="fas fa-project-diagram"></i> 
+            <span class="desktop-only">Quản lý Đề tài Nghiên cứu</span>
+            <span class="mobile-only">Đề tài</span>
+        </h1>
+        <a href="{{ url_for('main.detai_add') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> <span class="desktop-only">Thêm đề tài mới</span><span class="mobile-only">Thêm</span>
+        </a>
+    </div>
 </div>
 
 <!-- Tìm kiếm -->
@@ -39,6 +43,7 @@
     </div>
     <div class="card-body">
         {% if pagination.items %}
+        <div class="table-wrapper">
         <table class="table" id="detaiTable">
             <thead>
                 <tr class="header-row">
@@ -140,6 +145,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
 
         <!-- Pagination -->
         {% if pagination.pages > 1 %}
@@ -422,7 +428,7 @@ select.column-filter {
 
 .card-header {
     font-weight: 600;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, #1a4d1b 0%, #1a4d1b 100%) !important;
     color: white !important;
     border-radius: 8px 8px 0 0 !important;
 }

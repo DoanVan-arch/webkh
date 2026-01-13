@@ -1582,6 +1582,159 @@ def thongke():
     total_tailieu = sum(s['total'] for s in tailieu_stats)
     total_tiemluc = sum(s['total'] for s in tiemluc_stats)
     
+    # ========== MỚI: TOP 10 NGƯỜI THAM GIA NHIỀU ĐỀ TÀI (Từ bảng ban_de_tai) ==========
+    # Query từ bảng BanDeTai kết hợp với DeTai để lọc theo đơn vị và năm
+    top_detai_participants = db.session.query(
+        BanDeTai.ho_ten,
+        func.count(BanDeTai.id).label('total')
+    ).join(DeTai, BanDeTai.de_tai_id == DeTai.id)
+    
+    if don_vi_filter:
+        top_detai_participants = top_detai_participants.filter(DeTai.don_vi == don_vi_filter)
+    if nam_filter:
+        top_detai_participants = top_detai_participants.filter(func.extract('year', DeTai.ngay_bat_dau) == int(nam_filter))
+    
+    top_detai_participants = top_detai_participants.group_by(BanDeTai.ho_ten)\
+        .order_by(func.count(BanDeTai.id).desc())\
+        .limit(10).all()
+    top_detai_participants_list = [{'ho_ten': ht, 'total': total} for ht, total in top_detai_participants]
+    
+    # ========== MỚI: TOP 10 NGƯỜI THAM GIA NHIỀU SÁNG KIẾN (Từ bảng ban_sang_kien) ==========
+    top_sangkien_participants = db.session.query(
+        BanSangKien.ho_ten,
+        func.count(BanSangKien.id).label('total')
+    ).join(SangKien, BanSangKien.sang_kien_id == SangKien.id)
+    
+    if don_vi_filter:
+        top_sangkien_participants = top_sangkien_participants.filter(SangKien.don_vi == don_vi_filter)
+    if nam_filter:
+        top_sangkien_participants = top_sangkien_participants.filter(func.extract('year', SangKien.ngay_bat_dau) == int(nam_filter))
+    
+    top_sangkien_participants = top_sangkien_participants.group_by(BanSangKien.ho_ten)\
+        .order_by(func.count(BanSangKien.id).desc())\
+        .limit(10).all()
+    top_sangkien_participants_list = [{'ho_ten': ht, 'total': total} for ht, total in top_sangkien_participants]
+    
+    # ========== MỚI: TOP 10 NGƯỜI THAM GIA HỘI ĐỒNG NHIỀU ==========
+    # Kết hợp từ tất cả các bảng hội đồng (đề tài, sáng kiến, tài liệu)
+    from sqlalchemy import union_all
+    
+    # Query hội đồng đề cương đề tài
+    hd_de_cuong_detai = db.session.query(
+        HoiDongDeCuongDeTai.ho_ten.label('ho_ten'),
+        HoiDongDeCuongDeTai.id.label('id'),
+        DeTai.don_vi.label('don_vi'),
+        DeTai.ngay_bat_dau.label('ngay_bat_dau')
+    ).join(DeTai, HoiDongDeCuongDeTai.de_tai_id == DeTai.id)
+    
+    # Query hội đồng nghiệm thu đề tài
+    hd_nghiem_thu_detai = db.session.query(
+        HoiDongNghiemThuDeTai.ho_ten.label('ho_ten'),
+        HoiDongNghiemThuDeTai.id.label('id'),
+        DeTai.don_vi.label('don_vi'),
+        DeTai.ngay_bat_dau.label('ngay_bat_dau')
+    ).join(DeTai, HoiDongNghiemThuDeTai.de_tai_id == DeTai.id)
+    
+    # Query hội đồng đề cương sáng kiến
+    hd_de_cuong_sangkien = db.session.query(
+        HoiDongDeCuongSangKien.ho_ten.label('ho_ten'),
+        HoiDongDeCuongSangKien.id.label('id'),
+        SangKien.don_vi.label('don_vi'),
+        SangKien.ngay_bat_dau.label('ngay_bat_dau')
+    ).join(SangKien, HoiDongDeCuongSangKien.sang_kien_id == SangKien.id)
+    
+    # Query hội đồng nghiệm thu sáng kiến
+    hd_nghiem_thu_sangkien = db.session.query(
+        HoiDongNghiemThuSangKien.ho_ten.label('ho_ten'),
+        HoiDongNghiemThuSangKien.id.label('id'),
+        SangKien.don_vi.label('don_vi'),
+        SangKien.ngay_bat_dau.label('ngay_bat_dau')
+    ).join(SangKien, HoiDongNghiemThuSangKien.sang_kien_id == SangKien.id)
+    
+    # Query hội đồng đề cương tài liệu
+    hd_de_cuong_tailieu = db.session.query(
+        HoiDongDeCuongTaiLieu.ho_ten.label('ho_ten'),
+        HoiDongDeCuongTaiLieu.id.label('id'),
+        TaiLieu.don_vi.label('don_vi'),
+        TaiLieu.ngay_bat_dau.label('ngay_bat_dau')
+    ).join(TaiLieu, HoiDongDeCuongTaiLieu.tai_lieu_id == TaiLieu.id)
+    
+    # Query hội đồng nghiệm thu tài liệu
+    hd_nghiem_thu_tailieu = db.session.query(
+        HoiDongNghiemThuTaiLieu.ho_ten.label('ho_ten'),
+        HoiDongNghiemThuTaiLieu.id.label('id'),
+        TaiLieu.don_vi.label('don_vi'),
+        TaiLieu.ngay_bat_dau.label('ngay_bat_dau')
+    ).join(TaiLieu, HoiDongNghiemThuTaiLieu.tai_lieu_id == TaiLieu.id)
+    
+    # Kết hợp tất cả các query
+    combined_hoidong = union_all(
+        hd_de_cuong_detai,
+        hd_nghiem_thu_detai,
+        hd_de_cuong_sangkien,
+        hd_nghiem_thu_sangkien,
+        hd_de_cuong_tailieu,
+        hd_nghiem_thu_tailieu
+    ).alias('combined_hoidong')
+    
+    # Query top 10 từ kết quả kết hợp
+    top_hoidong_query = db.session.query(
+        combined_hoidong.c.ho_ten,
+        func.count(combined_hoidong.c.id).label('total')
+    )
+    
+    # Áp dụng filter
+    if don_vi_filter:
+        top_hoidong_query = top_hoidong_query.filter(combined_hoidong.c.don_vi == don_vi_filter)
+    if nam_filter:
+        top_hoidong_query = top_hoidong_query.filter(func.extract('year', combined_hoidong.c.ngay_bat_dau) == int(nam_filter))
+    
+    top_hoidong_participants = top_hoidong_query.group_by(combined_hoidong.c.ho_ten)\
+        .order_by(func.count(combined_hoidong.c.id).desc())\
+        .limit(10).all()
+    
+    top_hoidong_participants_list = [{'ho_ten': ht, 'total': total} for ht, total in top_hoidong_participants]
+    
+    # ========== MỚI: TOP 10 NGƯỜI THAM GIA NHIỀU TÀI LIỆU (Từ bảng ban_tai_lieu) ==========
+    top_tailieu_participants = db.session.query(
+        BanTaiLieu.ho_ten,
+        func.count(BanTaiLieu.id).label('total')
+    ).join(TaiLieu, BanTaiLieu.tai_lieu_id == TaiLieu.id)
+    
+    if don_vi_filter:
+        top_tailieu_participants = top_tailieu_participants.filter(TaiLieu.don_vi == don_vi_filter)
+    if nam_filter:
+        top_tailieu_participants = top_tailieu_participants.filter(func.extract('year', TaiLieu.ngay_bat_dau) == int(nam_filter))
+    
+    top_tailieu_participants = top_tailieu_participants.group_by(BanTaiLieu.ho_ten)\
+        .order_by(func.count(BanTaiLieu.id).desc())\
+        .limit(10).all()
+    top_tailieu_participants_list = [{'ho_ten': ht, 'total': total} for ht, total in top_tailieu_participants]
+    
+    # ========== MỚI: THỐNG KÊ TIỀM LỰC THEO CHỨC DANH VÀ ĐƠN VỊ ==========
+    tiemluc_chuc_danh_stats = db.session.query(
+        TiemLuc.don_vi,
+        TiemLuc.chuc_danh,
+        func.count(TiemLuc.id).label('total')
+    )
+    if don_vi_filter:
+        tiemluc_chuc_danh_stats = tiemluc_chuc_danh_stats.filter(TiemLuc.don_vi == don_vi_filter)
+    tiemluc_chuc_danh_stats = tiemluc_chuc_danh_stats.filter(
+        TiemLuc.chuc_danh.isnot(None),
+        TiemLuc.don_vi.isnot(None)
+    ).group_by(TiemLuc.don_vi, TiemLuc.chuc_danh)\
+     .order_by(TiemLuc.don_vi, func.count(TiemLuc.id).desc()).all()
+    
+    # Chuyển đổi thành cấu trúc dễ sử dụng trong template
+    tiemluc_by_donvi_chucdanh = {}
+    for don_vi, chuc_danh, total in tiemluc_chuc_danh_stats:
+        if don_vi not in tiemluc_by_donvi_chucdanh:
+            tiemluc_by_donvi_chucdanh[don_vi] = []
+        tiemluc_by_donvi_chucdanh[don_vi].append({
+            'chuc_danh': chuc_danh,
+            'total': total
+        })
+    
     return render_template('thongke.html',
                          don_vi_stats=don_vi_stats,
                          sangkien_stats=sangkien_stats,
@@ -1612,7 +1765,14 @@ def thongke():
                          sangkien_by_quarter=sangkien_by_quarter,
                          completion_rate=completion_rate,
                          current_year=current_year,
-                         previous_year=previous_year)
+                         previous_year=previous_year,
+                         # Thống kê mới - Top participants
+                         top_detai_participants=top_detai_participants_list,
+                         top_sangkien_participants=top_sangkien_participants_list,
+                         top_hoidong_participants=top_hoidong_participants_list,
+                         top_tailieu_participants=top_tailieu_participants_list,
+                         # Thống kê tiềm lực theo chức danh và đơn vị
+                         tiemluc_by_donvi_chucdanh=tiemluc_by_donvi_chucdanh)
 
 @main_bp.route('/thongke/export-excel')
 @login_required
