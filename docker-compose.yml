@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: webkh_app
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=khoa-hoc-quan-su-secret-key-2025
+      - DATABASE_URL=sqlite:///khoa_hoc_quan_su.db
+      - FLASK_ENV=production
+    volumes:
+      # Mount volume để lưu trữ database và uploads
+      - ./instance:/app/instance
+      - ./static/uploads:/app/static/uploads
+    restart: unless-stopped
+    networks:
+      - webkh_network
+
+networks:
+  webkh_network:
+    driver: bridge
